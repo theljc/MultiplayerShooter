@@ -1,0 +1,16 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="Django.Ljc_Web.index.views.index" />
+          <option value="index.models.Movie_Info.objects" />
+          <option value="index.models.Collection_Data.objects" />
+          <option value="index.models.Movie_Score_Data.objects" />
+          <option value="index.models.Comment_Data.objects" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

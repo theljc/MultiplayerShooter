@@ -13,6 +13,11 @@ class ATest_MultiShooterGameMode : public AGameModeBase
 
 public:
 	ATest_MultiShooterGameMode();
+
+protected:
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
+	
 };
 
 

@@ -7,6 +7,12 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "MultiplayerSessionSubsystem.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnCreateSessionComplete, bool, bWasSuccessful);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FMultiplayerOnFindSessionComplete, const TArray<FOnlineSessionSearchResult>& SearchResults, bool bWasSuccessful);
+DECLARE_MULTICAST_DELEGATE_OneParam(FMultiplayerOnJoinSessionComplete, EOnJoinSessionCompleteResult::Type Results);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnDestroySessionComplete, bool, bWasSuccessful);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnStartSessionComplete, bool, bWasSuccessful);
+
 /**
  * 
  */
@@ -22,6 +28,12 @@ public:
 	void JoinSession(const FOnlineSessionSearchResult& Result);
 	void DestroySession();
 	void StartSession();
+
+	FMultiplayerOnCreateSessionComplete OnCreateSessionCompleteDelegate;
+	FMultiplayerOnFindSessionComplete OnFindSessionCompleteDelegate;
+	FMultiplayerOnJoinSessionComplete OnJoinSessionCompleteDelegate;
+	FMultiplayerOnDestroySessionComplete OnDestroySessionCompleteDelegate;
+	FMultiplayerOnStartSessionComplete OnStartSessionCompleteDelegate;
 	
 protected:
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
@@ -33,6 +45,10 @@ protected:
 private:
 	IOnlineSessionPtr SessionInterface;
 
+	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
+
+	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
+	
 	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 	FDelegateHandle CreateSessionCompleteDelegateHandle;
 	FOnFindSessionsCompleteDelegate FindSessionsCompleteDelegate;
@@ -43,5 +59,9 @@ private:
 	FDelegateHandle DestroySessionCompleteDelegateHandle;
 	FOnStartSessionCompleteDelegate StartSessionCompleteDelegate;
 	FDelegateHandle StartSessionCompleteDelegateHandle;
+
+	bool bCreateSessionDestroy{ false };
+	int32 LastNumPublicConnections;
+	FString LastMatchType;
 	
 };

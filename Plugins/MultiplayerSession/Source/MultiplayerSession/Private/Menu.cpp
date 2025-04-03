@@ -177,8 +177,11 @@ void UMenu::MenuTearDown()
 	if (World)
 	{
 		APlayerController* PlayerController = World->GetFirstPlayerController();
-		FInputModeGameOnly InputModeGame;
-		PlayerController->SetInputMode(InputModeGame);
-		PlayerController->SetShowMouseCursor(false);
+		if (PlayerController)
+		{
+			FInputModeGameOnly InputModeGame;
+			PlayerController->SetInputMode(InputModeGame);
+			PlayerController->SetShowMouseCursor(false);
+		}
 	}
 }

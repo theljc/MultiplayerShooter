@@ -16,7 +16,7 @@ class MULTIPLAYERSESSION_API UMenu : public UUserWidget
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintCallable)
-	void MenuSetUP(int32 NumOfPublicConnections = 4, FString TypeOfMatch = FString(TEXT("FreeForAll")), FString LobbyPath = FString(TEXT("/Game/ThirdPerson/Maps/Lobby")));
+	void MenuSetUP(int32 NumOfPublicConnections = 4, FString TypeOfMatch = FString(TEXT("FreeForAll")), FString LobbyPath = FString(TEXT("/Game/Maps/Lobby")));
 
 	UFUNCTION()
 	void OnCreateSession(bool bWasSuccessful);

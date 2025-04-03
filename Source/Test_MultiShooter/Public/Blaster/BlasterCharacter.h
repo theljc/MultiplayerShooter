@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "BlasterCharacter.generated.h"
 
+class UWidgetComponent;
 class USpringArmComponent;
 class UCameraComponent;
 struct FInputActionValue;
@@ -40,6 +41,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	TObjectPtr<UCameraComponent> Camera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UWidgetComponent> OverHeadWidget;
 
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> MappingContext;

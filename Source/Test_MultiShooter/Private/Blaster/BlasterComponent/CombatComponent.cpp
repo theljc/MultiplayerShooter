@@ -6,6 +6,7 @@
 #include "Blaster/BlasterCharacter.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
 UCombatComponent::UCombatComponent()
@@ -14,6 +15,16 @@ UCombatComponent::UCombatComponent()
 
 }
 
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquipWeapon && Character)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
+	
+}
 
 void UCombatComponent::BeginPlay()
 {
@@ -34,6 +45,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UCombatComponent, EquipWeapon);
+	DOREPLIFETIME(UCombatComponent, bAiming);
 	
 }
 
@@ -49,6 +61,20 @@ void UCombatComponent::EquippedWeapon(AWeapon* WeaponToEquipped)
 		WeaponSocket->AttachActor(EquipWeapon, Character->GetMesh());
 	}
 	EquipWeapon->SetOwner(Character);
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
 	
+}
+
+void UCombatComponent::SetAiming(bool bIsAiming)
+{
+	bAiming = bIsAiming;
+	// 调用 RPC 函数通知服务器修改客户端的变量
+	Server_Aiming(bIsAiming);
+}
+
+void UCombatComponent::Server_Aiming_Implementation(bool bIsAiming)
+{
+	bAiming = bIsAiming;
 }
 

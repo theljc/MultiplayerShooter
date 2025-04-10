@@ -5,10 +5,12 @@
 
 #include "Blaster/BlasterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void UBlasterAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
+	
 	BlasterCharacter = Cast<ABlasterCharacter>(TryGetPawnOwner());
 	
 }
@@ -16,6 +18,7 @@ void UBlasterAnimInstance::NativeInitializeAnimation()
 void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
 	Super::NativeUpdateAnimation(DeltaTime);
+	
 	if (BlasterCharacter == nullptr)
 	{
 		BlasterCharacter = Cast<ABlasterCharacter>(TryGetPawnOwner());
@@ -29,5 +32,23 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsInAir = BlasterCharacter->GetCharacterMovement()->IsFalling();
 	bIsAcceleration = BlasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f;
 	bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
+	bIsCrouched = BlasterCharacter->bIsCrouched;
+	bIsAiming =  BlasterCharacter->IsAiming();
 
+	// 计算角色速度方向和控制器方向的差量，用于判断移动方向
+	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();
+	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(BlasterCharacter->GetVelocity());
+	const FRotator DeltaRot = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AimRotation);
+	// 对 rotation 插值，平滑过渡各个动画，RInterpTo 会沿着最短路径插值，从 -180 度直接到 180 度
+	DeltaRotation = FMath::RInterpTo(DeltaRotation, DeltaRot, DeltaTime, 6.f);
+	YawOffset = DeltaRotation.Yaw;
+
+	// 根据上一帧和这一帧的旋转的差量，计算 Lean 倾斜度
+	LastFrameCharacterRotator = CharacterRotator;
+	CharacterRotator = BlasterCharacter->GetActorRotation();
+	const FRotator Delta = UKismetMathLibrary::NormalizedDeltaRotator(CharacterRotator, LastFrameCharacterRotator);
+	const float Target = Delta.Yaw / DeltaTime;
+	const float Interp = FMath::FInterpTo(Lean, Target, DeltaTime, 6.f);
+	Lean = FMath::Clamp(Interp, -90.f, 90.f);
+	
 }

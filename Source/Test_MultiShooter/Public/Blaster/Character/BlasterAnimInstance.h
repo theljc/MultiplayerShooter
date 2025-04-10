@@ -33,5 +33,21 @@ private:
 
 	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
 	bool bWeaponEquipped;
+
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
+	bool bIsCrouched;
+
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
+	bool bIsAiming;
+
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
+	float YawOffset;
+	
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
+	float Lean;
+
+	FRotator LastFrameCharacterRotator;
+	FRotator CharacterRotator;
+	FRotator DeltaRotation;
 	
 };

@@ -39,7 +39,9 @@ protected:
 	void Turn(const FInputActionValue& Value);
 	void LookUP(const FInputActionValue& Value);
 	void EquippedButtonPressed();
-	
+	void CrouchButtonPressed();
+	void AimingButtonPressed();
+	void AimingButtonReleased();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -83,12 +85,21 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Equipped;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Crouch;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Aiming;
 	
 public:
 	// 设置 OverlappingWeapon，由于 OverlappingWeapon 已经被注册为需要复制的变量，当 OverlappingWeapon 改变时，会根据条件复制到指定客户端
 	void SetOverlappingWeapon(AWeapon* Weapon);
 
 	bool IsWeaponEquipped();
+
+	bool IsAiming();
+
 	
 };
 

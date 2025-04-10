@@ -22,6 +22,15 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void EquippedWeapon(AWeapon* WeaponToEquipped);
+
+	void SetAiming(bool IsAiming);
+
+	// 被标记为 Server 的函数，不管是从服务器还是从客户端调用，都只会在服务器上执行
+	UFUNCTION(Server, Reliable)
+	void Server_Aiming(bool bIsAiming);
+
+	UFUNCTION()
+	void OnRep_EquippedWeapon();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -30,8 +39,11 @@ protected:
 private:
 	TObjectPtr<ABlasterCharacter> Character;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
 	TObjectPtr<AWeapon> EquipWeapon;
 
-		
+	UPROPERTY(Replicated)
+	bool bAiming;
+	
 };
+

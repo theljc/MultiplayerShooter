@@ -45,7 +45,13 @@ private:
 	
 	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
 	float Lean;
+	
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
+	float AO_Yaw;
 
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
+	float AO_Pitch;
+	
 	FRotator LastFrameCharacterRotator;
 	FRotator CharacterRotator;
 	FRotator DeltaRotation;

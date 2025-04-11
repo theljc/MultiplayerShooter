@@ -13,6 +13,8 @@ UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
+	BaseWalkSpeed = 600.f;
+	AimWalkSpeed = 450.f;
 }
 
 
@@ -30,6 +32,10 @@ void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
 	
 }
 
@@ -71,10 +77,22 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	bAiming = bIsAiming;
 	// 调用 RPC 函数通知服务器修改客户端的变量
 	Server_Aiming(bIsAiming);
+
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+	
 }
 
 void UCombatComponent::Server_Aiming_Implementation(bool bIsAiming)
 {
 	bAiming = bIsAiming;
+
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+	
 }
 

@@ -10,6 +10,7 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -46,7 +47,6 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 
 	// 复制条件为 COND_OwnerOnly，表示仅拥有这个 OverlappingWeapon 的 Character 所在的客户端才会被复制
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
-	
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -140,6 +140,50 @@ void ABlasterCharacter::AimingButtonReleased()
 	}
 }
 
+void ABlasterCharacter::AimingOffset(float DeltaTime)
+{
+	if (CombatComponent && CombatComponent->EquipWeapon == nullptr) return;
+	
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	float Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+
+	if (Speed == 0.f && !bIsInAir)
+	{
+		// 站立待机状态
+		FRotator CurrentAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
+		FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartAimRotation);
+		AO_Yaw = DeltaRotation.Yaw;
+		bUseControllerRotationYaw = false;
+	}
+
+	if (Speed > 0.f || bIsInAir)
+	{
+		// Running 或者 Jumping 状态
+		StartAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
+		AO_Yaw = 0.f;
+		bUseControllerRotationYaw = true;
+	}
+
+	AO_Pitch = GetBaseAimRotation().Pitch;
+
+	// 由于旋转值会被限制在 0 到 360 之间（比如 -1 会变成 359 ），所以需要映射 Pitch 轴的值
+	if (AO_Pitch > 90.f && !IsLocallyControlled())
+	{
+		FVector2D InRange(270.f, 360.f);
+		FVector2D OutRange(-90.f, 0.f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
+
+	if (HasAuthority() && !IsLocallyControlled())
+	{
+		
+		UE_LOG(LogTemp, Warning, TEXT("%f"), AO_Pitch);
+	}
+	
+}
+
 void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 {
 	if (CombatComponent)
@@ -154,6 +198,8 @@ void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	AimingOffset(DeltaTime);
+	
 }
 
 // Called to bind functionality to input

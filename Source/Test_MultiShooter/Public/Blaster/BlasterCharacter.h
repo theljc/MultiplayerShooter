@@ -42,6 +42,13 @@ protected:
 	void CrouchButtonPressed();
 	void AimingButtonPressed();
 	void AimingButtonReleased();
+	void AimingOffset(float DeltaTime);
+
+	float AO_Yaw;
+
+	float AO_Pitch;
+
+	FRotator StartAimRotation;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -100,6 +107,8 @@ public:
 
 	bool IsAiming();
 
+	FORCEINLINE float GetAO_Yaw() { return AO_Yaw; }
+	FORCEINLINE float GetAO_Pitch() { return AO_Pitch; }
 	
 };
 

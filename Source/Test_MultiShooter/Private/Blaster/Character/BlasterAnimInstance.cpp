@@ -4,6 +4,7 @@
 #include "Blaster/Character/BlasterAnimInstance.h"
 
 #include "Blaster/BlasterCharacter.h"
+#include "Blaster/Weapon/Weapon.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -32,8 +33,10 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsInAir = BlasterCharacter->GetCharacterMovement()->IsFalling();
 	bIsAcceleration = BlasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f;
 	bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
+	EquippedWeapon = BlasterCharacter->GetWeapon();
 	bIsCrouched = BlasterCharacter->bIsCrouched;
 	bIsAiming =  BlasterCharacter->IsAiming();
+	TurnInPlace = BlasterCharacter->GetTurnInPlace();
 
 	// 计算角色速度方向和控制器方向的差量，用于判断移动方向
 	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();
@@ -51,8 +54,26 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	const float Interp = FMath::FInterpTo(Lean, Target, DeltaTime, 6.f);
 	Lean = FMath::Clamp(Interp, -90.f, 90.f);
 
+	// 获得角色类中计算好的瞄准偏移
 	AO_Yaw = BlasterCharacter->GetAO_Yaw();
 	AO_Pitch = BlasterCharacter->GetAO_Pitch();
 
+	// FABRIK 将左手移动到武器的插槽上
+	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && BlasterCharacter->GetMesh())
+	{
+		// 获得插槽的 Transform
+		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), RTS_World);
+
+		FVector OutVector;
+		FRotator OutRotator;
+
+		// 在骨骼空间中计算 hand_r 骨骼到 LeftHandTransform 的位置和旋转，保存到 OutVector 和 OutRotator 中
+		BlasterCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutVector, OutRotator);
+		
+		LeftHandTransform.SetLocation(OutVector);
+		LeftHandTransform.SetRotation(FQuat(OutRotator));
+	}
+
+	TurnInPlace = BlasterCharacter->GetTurnInPlace();
 	
 }

@@ -38,6 +38,15 @@ ABlasterCharacter::ABlasterCharacter()
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	// Component 不需要被注册，不需要添加到 GetLifetimeReplicatedProps 中
 	CombatComponent->SetIsReplicated(true);
+
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 850.f);
+	
+	TurnInPlace = ETurnInPlace::ETIP_NotTurn;
+
+	// 设置 Actor 每秒更新的频率
+	NetUpdateFrequency = 66.f;
+	// 当需要复制的属性不经常更改时，降低更新的频率
+	MinNetUpdateFrequency = 33.f;
 	
 }
 
@@ -155,7 +164,12 @@ void ABlasterCharacter::AimingOffset(float DeltaTime)
 		FRotator CurrentAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
 		FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartAimRotation);
 		AO_Yaw = DeltaRotation.Yaw;
-		bUseControllerRotationYaw = false;
+		if (TurnInPlace == ETurnInPlace::ETIP_NotTurn)
+		{
+			Interp_AO_Yaw = AO_Yaw;
+		}
+		bUseControllerRotationYaw = true;
+		SetTurnInPlace(DeltaTime);
 	}
 
 	if (Speed > 0.f || bIsInAir)
@@ -164,6 +178,7 @@ void ABlasterCharacter::AimingOffset(float DeltaTime)
 		StartAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
 		AO_Yaw = 0.f;
 		bUseControllerRotationYaw = true;
+		TurnInPlace = ETurnInPlace::ETIP_NotTurn;
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
@@ -182,6 +197,43 @@ void ABlasterCharacter::AimingOffset(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("%f"), AO_Pitch);
 	}
 	
+}
+
+void ABlasterCharacter::SetTurnInPlace(float DeltaTime)
+{
+	if (AO_Yaw > 90.f)
+	{
+		TurnInPlace = ETurnInPlace::ETIP_Left;
+	}
+	else if (AO_Yaw < -90.f)
+	{
+		TurnInPlace = ETurnInPlace::ETIP_Right;
+	}
+
+	if (TurnInPlace != ETurnInPlace::ETIP_NotTurn)
+	{
+		Interp_AO_Yaw = FMath::FInterpTo(Interp_AO_Yaw, 0.f, DeltaTime, 4.f);
+		AO_Yaw = Interp_AO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.f)
+		{
+			TurnInPlace = ETurnInPlace::ETIP_NotTurn;
+			StartAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
+
+		}
+	}
+	
+}
+
+void ABlasterCharacter::Jump()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+	else
+	{
+		Super::Jump();
+	}
 }
 
 void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
@@ -216,6 +268,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Started, this, &ABlasterCharacter::CrouchButtonPressed);
 	EnhancedInputComponent->BindAction(IA_Aiming, ETriggerEvent::Started, this, &ABlasterCharacter::AimingButtonPressed);
 	EnhancedInputComponent->BindAction(IA_Aiming, ETriggerEvent::Completed, this, &ABlasterCharacter::AimingButtonReleased);
+	EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Started, this, &ABlasterCharacter::Jump);
 	
 }
 
@@ -262,4 +315,11 @@ bool ABlasterCharacter::IsWeaponEquipped()
 bool ABlasterCharacter::IsAiming()
 {
 	return (CombatComponent && CombatComponent->bAiming);
+}
+
+TObjectPtr<AWeapon> ABlasterCharacter::GetWeapon()
+{
+	if (CombatComponent == nullptr) return nullptr;
+
+	return CombatComponent->EquipWeapon;
 }

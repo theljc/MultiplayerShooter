@@ -21,6 +21,12 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem():
 	}
 }
 
+void UMultiplayerSessionsSubsystem::Deinitialize()
+{
+	Super::Deinitialize();
+	SessionInterface.Reset();
+}
+
 void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
 {
 	if (!SessionInterface.IsValid())

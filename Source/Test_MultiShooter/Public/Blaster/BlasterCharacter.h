@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Blaster/BlasterTypes/TurnInPlace.h"
 #include "BlasterCharacter.generated.h"
 
 class UCombatComponent;
@@ -43,9 +44,11 @@ protected:
 	void AimingButtonPressed();
 	void AimingButtonReleased();
 	void AimingOffset(float DeltaTime);
+	void SetTurnInPlace(float DeltaTime);
+	virtual void Jump() override;
 
 	float AO_Yaw;
-
+	float Interp_AO_Yaw;
 	float AO_Pitch;
 
 	FRotator StartAimRotation;
@@ -62,6 +65,8 @@ private:
 
 	UPROPERTY(ReplicatedUsing=OnRep_OverlappingWeapon)
 	TObjectPtr<AWeapon> OverlappingWeapon;
+
+	ETurnInPlace TurnInPlace;
 
 	// RepNotify 通知时，会在服务器端修改变量的值，但不会触发 OnRep 函数
 	// OnRep 函数可以有一个参数，当变量复制时，参数中会保存旧的变量值
@@ -98,6 +103,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Aiming;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Jump;
 	
 public:
 	// 设置 OverlappingWeapon，由于 OverlappingWeapon 已经被注册为需要复制的变量，当 OverlappingWeapon 改变时，会根据条件复制到指定客户端
@@ -109,6 +117,9 @@ public:
 
 	FORCEINLINE float GetAO_Yaw() { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() { return AO_Pitch; }
+	FORCEINLINE ETurnInPlace GetTurnInPlace() { return TurnInPlace; }
+
+	TObjectPtr<AWeapon> GetWeapon();
 	
 };
 

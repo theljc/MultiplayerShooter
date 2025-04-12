@@ -27,6 +27,8 @@ class MULTIPLAYERSESSIONS_API UMultiplayerSessionsSubsystem : public UGameInstan
 public:
 	UMultiplayerSessionsSubsystem();
 
+	virtual void Deinitialize() override;
+
 	//
 	// To handle session functionality. The Menu class will call these
 	//

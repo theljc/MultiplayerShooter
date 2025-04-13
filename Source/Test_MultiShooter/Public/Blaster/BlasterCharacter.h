@@ -35,6 +35,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void Jump() override;
+
 	void MoveForward(const FInputActionValue& Value);
 	void MoveRight(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
@@ -45,7 +47,8 @@ protected:
 	void AimingButtonReleased();
 	void AimingOffset(float DeltaTime);
 	void SetTurnInPlace(float DeltaTime);
-	virtual void Jump() override;
+	void FireButtonPressed();
+	void FireButtonReleased();
 
 	float AO_Yaw;
 	float Interp_AO_Yaw;
@@ -65,6 +68,9 @@ private:
 
 	UPROPERTY(ReplicatedUsing=OnRep_OverlappingWeapon)
 	TObjectPtr<AWeapon> OverlappingWeapon;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UAnimMontage> FireMontage_Aim_Hip;
 
 	ETurnInPlace TurnInPlace;
 
@@ -106,6 +112,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Jump;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Fire;
 	
 public:
 	// 设置 OverlappingWeapon，由于 OverlappingWeapon 已经被注册为需要复制的变量，当 OverlappingWeapon 改变时，会根据条件复制到指定客户端
@@ -114,6 +123,8 @@ public:
 	bool IsWeaponEquipped();
 
 	bool IsAiming();
+	
+	void PlayFireMontage(bool bAiming);
 
 	FORCEINLINE float GetAO_Yaw() { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() { return AO_Pitch; }

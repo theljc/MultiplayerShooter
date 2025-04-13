@@ -28,7 +28,8 @@ public:
 	void ShowPickUpWidget(bool bShow);
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-
+	virtual void Fire(const FVector& HitTarget);
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -59,6 +60,9 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, Category="Weapon")
 	TObjectPtr<UWidgetComponent> PickUpWidget;
+
+	UPROPERTY(EditAnywhere, Category="Weapon")
+	TObjectPtr<UAnimationAsset> FireAnimation;
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere)
 	EWeaponState WeaponState = EWeaponState::EWC_Initial;

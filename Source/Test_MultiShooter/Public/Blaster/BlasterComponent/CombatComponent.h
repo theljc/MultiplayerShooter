@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
+#define TRACE_LENGTH 80000.f
 
 class AWeapon;
 
@@ -31,6 +32,17 @@ public:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+
+	void FireButtonPressed(bool bPressed);
+
+	UFUNCTION(Server, Reliable)
+	void Server_Fire(const FVector_NetQuantize& TraceHitTarget);
+
+	// 多播 RPC 在服务器上执行时，会广播到服务器和所有客户端。在客户端执行时只会在自己的客户端执行，没有意义
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_Fire(const FVector_NetQuantize& TraceHitTarget);
+
+	void TraceUnderCrossHair(FHitResult& HitResult);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -50,6 +62,8 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	float AimWalkSpeed;
+
+	bool bFireButtonPressed;
 	
 };
 

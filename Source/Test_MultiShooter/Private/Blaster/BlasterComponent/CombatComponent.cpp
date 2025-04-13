@@ -7,6 +7,7 @@
 #include "Blaster/Weapon/Weapon.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 UCombatComponent::UCombatComponent()
@@ -28,6 +29,69 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	
 }
 
+void UCombatComponent::FireButtonPressed(bool bPressed)
+{
+	bFireButtonPressed = bPressed;
+
+	if (bFireButtonPressed)
+	{
+		FHitResult HitResult;
+		TraceUnderCrossHair(HitResult);
+		Server_Fire(HitResult.ImpactPoint);
+	}
+	
+}
+
+void UCombatComponent::Server_Fire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	if (EquipWeapon == nullptr) return;
+
+	if (Character)
+	{
+		// 服务器端执行，并且广播到所有客户端
+		NetMulticast_Fire(TraceHitTarget);
+	}
+}
+
+void UCombatComponent::NetMulticast_Fire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	Character->PlayFireMontage(bAiming);
+	EquipWeapon->Fire(TraceHitTarget);
+}
+
+void UCombatComponent::TraceUnderCrossHair(FHitResult& HitResult)
+{
+	FVector2D ViewPortSize;
+	if (GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewPortSize);
+	}
+
+	FVector2D CrossHairLocation(ViewPortSize.X / 2.f, ViewPortSize.Y / 2.f);
+	FVector CrossHairWorldPosition;
+	FVector CrossHairWorldDirection;
+	bool bDeproject = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrossHairLocation,
+		CrossHairWorldPosition,
+		CrossHairWorldDirection
+	);
+
+	if (bDeproject)
+	{
+		FVector Start = CrossHairWorldPosition;
+		FVector End = Start + CrossHairWorldDirection * TRACE_LENGTH;
+
+		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
+
+		if (!HitResult.bBlockingHit)
+		{
+			HitResult.ImpactPoint = End;
+		}
+		
+	}
+}
+
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -43,7 +107,7 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

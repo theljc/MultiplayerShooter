@@ -224,6 +224,36 @@ void ABlasterCharacter::SetTurnInPlace(float DeltaTime)
 	
 }
 
+void ABlasterCharacter::FireButtonPressed()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->FireButtonPressed(true);
+	}
+}
+
+void ABlasterCharacter::FireButtonReleased()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->FireButtonPressed(false);
+	}
+}
+
+void ABlasterCharacter::PlayFireMontage(bool bAiming)
+{
+	if (CombatComponent == nullptr || CombatComponent->EquipWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireMontage_Aim_Hip)
+	{
+		AnimInstance->Montage_Play(FireMontage_Aim_Hip);
+		FName SectionName;
+		SectionName = bAiming ? FName("Fire_Aim") : FName("Fire_Aim_Hip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void ABlasterCharacter::Jump()
 {
 	if (bIsCrouched)
@@ -269,6 +299,8 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	EnhancedInputComponent->BindAction(IA_Aiming, ETriggerEvent::Started, this, &ABlasterCharacter::AimingButtonPressed);
 	EnhancedInputComponent->BindAction(IA_Aiming, ETriggerEvent::Completed, this, &ABlasterCharacter::AimingButtonReleased);
 	EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Started, this, &ABlasterCharacter::Jump);
+	EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Started, this, &ABlasterCharacter::FireButtonPressed);
+	EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Completed, this, &ABlasterCharacter::FireButtonReleased);
 	
 }
 

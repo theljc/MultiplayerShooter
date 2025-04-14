@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Projectile.generated.h"
 
+class USoundCue;
 class UProjectileMovementComponent;
 class UBoxComponent;
 
@@ -20,6 +21,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
+
+	UFUNCTION()
+	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult);
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -32,5 +37,11 @@ private:
 	TObjectPtr<UParticleSystem> TracerSystem;
 
 	TObjectPtr<UParticleSystemComponent> TracerSystemComponent;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ImpactParticle;
+
+	UPROPERTY(EditAnywhere)
+	USoundCue* ImpactSound;
 	
 };

@@ -3,11 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blaster/HUD/BlasterHUD.h"
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
 #define TRACE_LENGTH 80000.f
 
+class ABlasterHUD;
+class ABlasterPlayerController;
 class AWeapon;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -43,14 +46,18 @@ public:
 	void NetMulticast_Fire(const FVector_NetQuantize& TraceHitTarget);
 
 	void TraceUnderCrossHair(FHitResult& HitResult);
+
+	void SetHUDCrosshairs(float DeltaTime);
 	
 protected:
 	virtual void BeginPlay() override;
 	
 
 private:
-	TObjectPtr<ABlasterCharacter> Character;
-
+	ABlasterCharacter* Character;
+	ABlasterPlayerController* CharacterPlayerController;
+	ABlasterHUD* CharacterHUD;
+	
 	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
 	TObjectPtr<AWeapon> EquipWeapon;
 

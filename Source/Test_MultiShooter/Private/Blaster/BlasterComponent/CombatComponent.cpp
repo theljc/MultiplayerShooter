@@ -4,6 +4,8 @@
 #include "Blaster/BlasterComponent/CombatComponent.h"
 
 #include "Blaster/BlasterCharacter.h"
+#include "Blaster/HUD/BlasterHUD.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -12,10 +14,11 @@
 
 UCombatComponent::UCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 
 	BaseWalkSpeed = 600.f;
 	AimWalkSpeed = 450.f;
+	
 }
 
 
@@ -79,10 +82,19 @@ void UCombatComponent::TraceUnderCrossHair(FHitResult& HitResult)
 
 	if (bDeproject)
 	{
+
 		FVector Start = CrossHairWorldPosition;
 		FVector End = Start + CrossHairWorldDirection * TRACE_LENGTH;
-
-		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
+		
+		if (Character)
+		{
+			float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
+			Start += CrossHairWorldDirection * (DistanceToCharacter + 100.f);
+		}
+		
+		GetWorld()->LineTraceSingleByChannel(HitResult,
+			Start, End,
+			ECC_Visibility);
 
 		if (!HitResult.bBlockingHit)
 		{
@@ -90,6 +102,65 @@ void UCombatComponent::TraceUnderCrossHair(FHitResult& HitResult)
 		}
 		
 	}
+}
+
+void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
+{
+	if (Character == nullptr || Character->Controller == nullptr) return;
+
+	FHUDPackage HUDPackage;
+
+	CharacterPlayerController = CharacterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : CharacterPlayerController;
+	if (CharacterPlayerController)
+	{
+		CharacterHUD = CharacterHUD == nullptr ? Cast<ABlasterHUD>(CharacterPlayerController->GetHUD()) : CharacterHUD;
+		if (CharacterHUD)
+		{
+			if (EquipWeapon)
+			{
+				HUDPackage.CrossHairs = EquipWeapon->CrossHairs;
+			}
+			else
+			{
+				HUDPackage.CrossHairs = nullptr;
+			}
+
+			CharacterHUD->SetHUDPackage(HUDPackage);
+		}
+	}
+
+	// if (CharacterPlayerController == nullptr)
+	// {
+	// 	CharacterPlayerController = Cast<ABlasterPlayerController>(Character->Controller);
+	// 	if (CharacterPlayerController)
+	// 	{
+	// 		if (CharacterHUD == nullptr)
+	// 		{
+	// 			CharacterHUD = Cast<ABlasterHUD>(CharacterPlayerController->GetHUD());
+	// 			if (CharacterHUD)
+	// 			{
+	// 				if (EquipWeapon)
+	// 				{
+	// 					if (CharacterHUD)
+	// 					{
+	// 						HUDPackage.CrossHairs = EquipWeapon->CrossHairs;
+	// 					}
+	// 					else
+	// 					{
+	// 						HUDPackage.CrossHairs = nullptr;
+	// 					}
+	// 				}
+	// 	
+	// 				
+	// 			}
+	// 		}
+	// 	}
+	// }
+	
+
+
+
+	
 }
 
 void UCombatComponent::BeginPlay()
@@ -107,6 +178,8 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	SetHUDCrosshairs(DeltaTime);
 	
 }
 

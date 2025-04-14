@@ -1,19 +1,24 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameMode.h"
+#include "GameFramework/GameModeBase.h"
 #include "LobbyGameMode.generated.h"
 
-/**
- * 
- */
-UCLASS()
-class TEST_MULTISHOOTER_API ALobbyGameMode : public AGameMode
+UCLASS(minimalapi)
+class ALobbyGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
 public:
+	ALobbyGameMode();
+
+protected:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
 	
 };
+
+
+

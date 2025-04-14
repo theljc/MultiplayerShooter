@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class ACasing;
 class UWidgetComponent;
 class USphereComponent;
 
@@ -29,6 +30,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void Fire(const FVector& HitTarget);
+
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	UTexture2D* CrossHairs;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -64,6 +68,9 @@ private:
 	UPROPERTY(EditAnywhere, Category="Weapon")
 	TObjectPtr<UAnimationAsset> FireAnimation;
 
+	UPROPERTY(EditAnywhere, Category="Weapon")
+	TSubclassOf<ACasing> CasingClass;
+	
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere)
 	EWeaponState WeaponState = EWeaponState::EWC_Initial;
 

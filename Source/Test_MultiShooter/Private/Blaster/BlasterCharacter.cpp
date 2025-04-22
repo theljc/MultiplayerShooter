@@ -7,6 +7,7 @@
 #include "Blaster/BlasterComponent/CombatComponent.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -39,6 +40,10 @@ ABlasterCharacter::ABlasterCharacter()
 	// Component 不需要被注册，不需要添加到 GetLifetimeReplicatedProps 中
 	CombatComponent->SetIsReplicated(true);
 
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 850.f);
 	
 	TurnInPlace = ETurnInPlace::ETIP_NotTurn;
@@ -71,7 +76,7 @@ void ABlasterCharacter::PostInitializeComponents()
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 void ABlasterCharacter::MoveForward(const FInputActionValue& Value)
@@ -240,6 +245,29 @@ void ABlasterCharacter::FireButtonReleased()
 	}
 }
 
+void ABlasterCharacter::HideCameraIfCharacterClosed()
+{
+	if (!IsLocallyControlled()) return;
+
+	if (( Camera->GetComponentLocation() - GetActorLocation() ).Size() < CameraThreshold)
+	{
+		GetMesh()->SetVisibility(false);
+		if (CombatComponent and CombatComponent->EquipWeapon and CombatComponent->EquipWeapon->GetWeaponMesh())
+		{
+			CombatComponent->EquipWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else
+	{
+		GetMesh()->SetVisibility(true);
+		if (CombatComponent and CombatComponent->EquipWeapon and CombatComponent->EquipWeapon->GetWeaponMesh())
+		{
+			CombatComponent->EquipWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+	
+}
+
 void ABlasterCharacter::PlayFireMontage(bool bAiming)
 {
 	if (CombatComponent == nullptr || CombatComponent->EquipWeapon == nullptr) return;
@@ -281,7 +309,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	AimingOffset(DeltaTime);
-	
+	HideCameraIfCharacterClosed();
 }
 
 // Called to bind functionality to input
@@ -354,4 +382,11 @@ TObjectPtr<AWeapon> ABlasterCharacter::GetWeapon()
 	if (CombatComponent == nullptr) return nullptr;
 
 	return CombatComponent->EquipWeapon;
+}
+
+FVector ABlasterCharacter::GetHitTarget()
+{
+	if (!CombatComponent) return FVector::ZeroVector;
+
+	return CombatComponent->HitTarget;
 }

@@ -71,6 +71,22 @@ private:
 	float AimWalkSpeed;
 
 	bool bFireButtonPressed;
+
+	FVector HitTarget;
+
+	FHUDPackage HUDPackage;
+
+	float DefaultFOV;
+
+	UPROPERTY(EditAnywhere, Category=Combat)
+	float ZoomedFOV = 30.f;
+
+	float CurrentFOV;
+
+	UPROPERTY(EditAnywhere, Category=Combat)
+	float ZoomedInterpSpeed = 20.f;
+
+	void InterpFOV(float DeltaTime);
 	
 };
 

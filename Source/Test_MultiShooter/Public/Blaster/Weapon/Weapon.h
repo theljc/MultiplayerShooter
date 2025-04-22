@@ -74,6 +74,12 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere)
 	EWeaponState WeaponState = EWeaponState::EWC_Initial;
 
+	UPROPERTY(EditAnywhere, Category=Combat)
+	float ZoomedFOV = 30.f;
+
+	UPROPERTY(EditAnywhere, Category=Combat)
+	float ZoomedInterpSpeed = 20.f;
+
 	// 武器状态改变时复制
 	UFUNCTION()
 	void OnRep_WeaponState();
@@ -82,5 +88,7 @@ public:
 	void SetWeaponState(EWeaponState NewWeaponState);
 	FORCEINLINE USphereComponent* GetSphereComponent() const { return SphereComponent; }
 	FORCEINLINE TObjectPtr<USkeletalMeshComponent> GetWeaponMesh() const { return WeaponMesh; }
+	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
+	FORCEINLINE float GetZoomedInterpSpeed() const { return ZoomedInterpSpeed; }
 	
 };

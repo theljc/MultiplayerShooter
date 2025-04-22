@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurnInPlace.h"
+#include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
 class UCombatComponent;
@@ -17,7 +18,7 @@ class UInputMappingContext;
 class UInputAction;
 
 UCLASS()
-class TEST_MULTISHOOTER_API ABlasterCharacter : public ACharacter
+class TEST_MULTISHOOTER_API ABlasterCharacter : public ACharacter, public IInteractCrosshair_Interface
 {
 	GENERATED_BODY()
 
@@ -50,11 +51,14 @@ protected:
 	void FireButtonPressed();
 	void FireButtonReleased();
 
+	void HideCameraIfCharacterClosed();
+
 	float AO_Yaw;
 	float Interp_AO_Yaw;
 	float AO_Pitch;
 
 	FRotator StartAimRotation;
+
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -85,6 +89,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCombatComponent> CombatComponent;
+
+	UPROPERTY(EditAnywhere)
+	float CameraThreshold = 200.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> MappingContext;
@@ -129,8 +136,11 @@ public:
 	FORCEINLINE float GetAO_Yaw() { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() { return AO_Pitch; }
 	FORCEINLINE ETurnInPlace GetTurnInPlace() { return TurnInPlace; }
+	FORCEINLINE UCameraComponent* GetCamera() { return Camera; }
 
 	TObjectPtr<AWeapon> GetWeapon();
+
+	FVector GetHitTarget();
 	
 };
 

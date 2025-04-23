@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "Blaster/BlasterComponent/CombatComponent.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -61,6 +62,8 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 
 	// 复制条件为 COND_OwnerOnly，表示仅拥有这个 OverlappingWeapon 的 Character 所在的客户端才会被复制
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter, Health);
+	
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -72,11 +75,24 @@ void ABlasterCharacter::PostInitializeComponents()
 	}
 }
 
+void ABlasterCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.f;
+}
+
 // Called when the game starts or when spawned
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+	
 }
 
 void ABlasterCharacter::MoveForward(const FInputActionValue& Value)
@@ -154,17 +170,43 @@ void ABlasterCharacter::AimingButtonReleased()
 	}
 }
 
+void ABlasterCharacter::CalcAO_Pitch()
+{
+	AO_Pitch = GetBaseAimRotation().Pitch;
+
+	// 由于旋转值会被限制在 0 到 360 之间（比如 -1 会变成 359 ），所以需要映射 Pitch 轴的值
+	if (AO_Pitch > 90.f && !IsLocallyControlled())
+	{
+		FVector2D InRange(270.f, 360.f);
+		FVector2D OutRange(-90.f, 0.f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
+}
+
+float ABlasterCharacter::CalcSpeed()
+{
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	return  Velocity.Size();
+}
+
+void ABlasterCharacter::OnRep_Health()
+{
+	
+}
+
 void ABlasterCharacter::AimingOffset(float DeltaTime)
 {
 	if (CombatComponent && CombatComponent->EquipWeapon == nullptr) return;
 	
-	FVector Velocity = GetVelocity();
-	Velocity.Z = 0.f;
-	float Speed = Velocity.Size();
+	float Speed = CalcSpeed();
+	
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 
 	if (Speed == 0.f && !bIsInAir)
 	{
+		bRotateRootBone = true;
+		
 		// 站立待机状态
 		FRotator CurrentAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
 		FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartAimRotation);
@@ -179,6 +221,8 @@ void ABlasterCharacter::AimingOffset(float DeltaTime)
 
 	if (Speed > 0.f || bIsInAir)
 	{
+		bRotateRootBone = false;
+
 		// Running 或者 Jumping 状态
 		StartAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
 		AO_Yaw = 0.f;
@@ -186,21 +230,7 @@ void ABlasterCharacter::AimingOffset(float DeltaTime)
 		TurnInPlace = ETurnInPlace::ETIP_NotTurn;
 	}
 
-	AO_Pitch = GetBaseAimRotation().Pitch;
-
-	// 由于旋转值会被限制在 0 到 360 之间（比如 -1 会变成 359 ），所以需要映射 Pitch 轴的值
-	if (AO_Pitch > 90.f && !IsLocallyControlled())
-	{
-		FVector2D InRange(270.f, 360.f);
-		FVector2D OutRange(-90.f, 0.f);
-		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
-	}
-
-	if (HasAuthority() && !IsLocallyControlled())
-	{
-		
-		UE_LOG(LogTemp, Warning, TEXT("%f"), AO_Pitch);
-	}
+	CalcAO_Pitch();
 	
 }
 
@@ -268,6 +298,43 @@ void ABlasterCharacter::HideCameraIfCharacterClosed()
 	
 }
 
+void ABlasterCharacter::SimProxiesTurn()
+{
+	if (CombatComponent == nullptr || CombatComponent->EquipWeapon == nullptr) return;
+
+	bRotateRootBone = false;
+
+	float Speed = CalcSpeed();
+	if (Speed > 0.f)
+	{
+		TurnInPlace = ETurnInPlace::ETIP_NotTurn;
+		return;
+	}
+	
+	ProxyRotationLastFrame = ProxyRotation;
+	ProxyRotation = GetActorRotation();
+	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+
+	if (FMath::Abs(ProxyYaw) > TurnThreshold)
+	{
+		if (ProxyYaw > TurnThreshold)
+		{
+			TurnInPlace = ETurnInPlace::ETIP_Right;
+		}
+		else if (ProxyYaw < -TurnThreshold)
+		{
+			TurnInPlace = ETurnInPlace::ETIP_Left;
+		}
+		else
+		{
+			TurnInPlace = ETurnInPlace::ETIP_NotTurn;
+		}
+		return;
+	}
+	TurnInPlace = ETurnInPlace::ETIP_NotTurn;
+	
+}
+
 void ABlasterCharacter::PlayFireMontage(bool bAiming)
 {
 	if (CombatComponent == nullptr || CombatComponent->EquipWeapon == nullptr) return;
@@ -278,6 +345,19 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 		AnimInstance->Montage_Play(FireMontage_Aim_Hip);
 		FName SectionName;
 		SectionName = bAiming ? FName("Fire_Aim") : FName("Fire_Aim_Hip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayHitReactMontage()
+{
+	if (CombatComponent == nullptr || CombatComponent->EquipWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HitReactMontage)
+	{
+		AnimInstance->Montage_Play(HitReactMontage);
+		FName SectionName = FName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -302,13 +382,31 @@ void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 	}
 }
 
+void ABlasterCharacter::NetMulticast_OnHit_Implementation()
+{
+	PlayHitReactMontage();
+}
 
 // Called every frame
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	AimingOffset(DeltaTime);
+	// 能用大于来比较是因为 ENetRole 是枚举值
+	if (GetLocalRole() > ROLE_SimulatedProxy and IsLocallyControlled())
+	{
+		AimingOffset(DeltaTime);
+	}
+	else
+	{
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > 0.25f)
+		{
+			OnRep_ReplicatedMovement();
+		}
+		CalcAO_Pitch();
+	}
+	
 	HideCameraIfCharacterClosed();
 }
 

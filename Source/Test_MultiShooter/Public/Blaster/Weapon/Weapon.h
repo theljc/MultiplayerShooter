@@ -33,6 +33,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = CrossHairs)
 	UTexture2D* CrossHairs;
+
+	UPROPERTY(EditAnywhere, Category=Combat)
+	float FireDelay = 0.15f;
+
+	UPROPERTY(EditAnywhere, Category=Combat)
+	bool bAutoFire = true;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -79,7 +85,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category=Combat)
 	float ZoomedInterpSpeed = 20.f;
-
+	
 	// 武器状态改变时复制
 	UFUNCTION()
 	void OnRep_WeaponState();

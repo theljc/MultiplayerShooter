@@ -7,6 +7,8 @@
 #include "BlasterHUD.generated.h"
 
 
+class UCharacterOverlay;
+
 USTRUCT(BlueprintType)
 struct FHUDPackage
 {
@@ -26,8 +28,18 @@ class TEST_MULTISHOOTER_API ABlasterHUD : public AHUD
 {
 	GENERATED_BODY()
 public:
+	UPROPERTY(EditAnywhere, Category="Player Stats")
+	TSubclassOf<UUserWidget> CharacterOverlayClass;
+
+	UPROPERTY()
+	TObjectPtr<UCharacterOverlay> CharacterOverlay;
+	
 	virtual void DrawHUD() override;
 
+protected:
+	virtual void BeginPlay() override;
+	void AddCharacterOverlay();
+	
 private:
 	FHUDPackage HUDPackage;
 

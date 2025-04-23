@@ -8,6 +8,7 @@
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
+class ABlasterPlayerController;
 class UCombatComponent;
 class AWeapon;
 class UWidgetComponent;
@@ -33,6 +34,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 
+	virtual void OnRep_ReplicatedMovement() override;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -46,6 +49,7 @@ protected:
 	void CrouchButtonPressed();
 	void AimingButtonPressed();
 	void AimingButtonReleased();
+	void CalcAO_Pitch();
 	void AimingOffset(float DeltaTime);
 	void SetTurnInPlace(float DeltaTime);
 	void FireButtonPressed();
@@ -53,6 +57,8 @@ protected:
 
 	void HideCameraIfCharacterClosed();
 
+	void SimProxiesTurn();
+	
 	float AO_Yaw;
 	float Interp_AO_Yaw;
 	float AO_Pitch;
@@ -93,6 +99,28 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 
+	UPROPERTY(EditAnywhere, Category=Combat)
+	TObjectPtr<UAnimMontage> HitReactMontage;
+
+	bool bRotateRootBone;
+	float TurnThreshold = 0.5f;
+	FRotator ProxyRotationLastFrame;
+	FRotator ProxyRotation;
+	float ProxyYaw;
+	float TimeSinceLastMovementReplication;
+	float CalcSpeed();
+
+	UPROPERTY(EditAnywhere, Category="Player Stats")
+	float MaxHealth = 100.f;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Health, VisibleAnywhere, Category="Player Stats")
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
+
+	TObjectPtr<ABlasterPlayerController> BlasterPlayerController;
+	
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> MappingContext;
 	
@@ -132,15 +160,20 @@ public:
 	bool IsAiming();
 	
 	void PlayFireMontage(bool bAiming);
+	void PlayHitReactMontage();
 
 	FORCEINLINE float GetAO_Yaw() { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() { return AO_Pitch; }
 	FORCEINLINE ETurnInPlace GetTurnInPlace() { return TurnInPlace; }
 	FORCEINLINE UCameraComponent* GetCamera() { return Camera; }
+	FORCEINLINE bool ShouldRotateRootBone() { return bRotateRootBone; }
 
 	TObjectPtr<AWeapon> GetWeapon();
 
 	FVector GetHitTarget();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void NetMulticast_OnHit();
 	
 };
 

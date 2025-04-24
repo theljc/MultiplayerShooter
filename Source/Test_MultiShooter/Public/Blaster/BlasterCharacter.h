@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurnInPlace.h"
+#include "Components/TimelineComponent.h"
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
@@ -35,7 +36,13 @@ public:
 	virtual void PostInitializeComponents() override;
 
 	virtual void OnRep_ReplicatedMovement() override;
-	
+	void UpdateHUDHealth();
+
+	void Elim();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastEliminate();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -58,6 +65,8 @@ protected:
 	void HideCameraIfCharacterClosed();
 
 	void SimProxiesTurn();
+
+	
 	
 	float AO_Yaw;
 	float Interp_AO_Yaw;
@@ -102,6 +111,9 @@ private:
 	UPROPERTY(EditAnywhere, Category=Combat)
 	TObjectPtr<UAnimMontage> HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category=Combat)
+	TObjectPtr<UAnimMontage> ElimMontage;
+
 	bool bRotateRootBone;
 	float TurnThreshold = 0.5f;
 	FRotator ProxyRotationLastFrame;
@@ -120,6 +132,38 @@ private:
 	void OnRep_Health();
 
 	TObjectPtr<ABlasterPlayerController> BlasterPlayerController;
+
+	bool bElimed = false;
+
+	FTimerHandle ElimTimer;
+	
+	UPROPERTY(EditDefaultsOnly)
+	float ElimDelay = 3.f;
+	
+	void ElimTimeFinished();
+
+	
+	FOnTimelineFloat DissolveTrack;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UTimelineComponent> DissolveTimeline;
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+	void StartDissolve();
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UCurveFloat> DissolveCurve;
+
+	// 蓝图设置后创建的动态材质实例
+	UPROPERTY(VisibleAnywhere, Category=Elim)
+	TObjectPtr<UMaterialInstanceDynamic> DynamicDissolveMaterialInstance;
+
+	// 蓝图中设置的材质实例
+	UPROPERTY(EditAnywhere, Category=Elim)
+	TObjectPtr<UMaterialInstance> DissolveMaterialInstance;
+
+	
 	
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> MappingContext;
@@ -161,19 +205,22 @@ public:
 	
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReactMontage();
+	void PlayElimMontage();
+
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+
 
 	FORCEINLINE float GetAO_Yaw() { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() { return AO_Pitch; }
 	FORCEINLINE ETurnInPlace GetTurnInPlace() { return TurnInPlace; }
 	FORCEINLINE UCameraComponent* GetCamera() { return Camera; }
 	FORCEINLINE bool ShouldRotateRootBone() { return bRotateRootBone; }
+	FORCEINLINE bool IsElimed() { return bElimed; }
 
 	TObjectPtr<AWeapon> GetWeapon();
 
 	FVector GetHitTarget();
-
-	UFUNCTION(NetMulticast, Unreliable)
-	void NetMulticast_OnHit();
 	
 };
 

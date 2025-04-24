@@ -70,6 +70,9 @@ private:
 
 	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
 	bool bRotateRootBone;
+
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
+	bool bElimed;
 	
 	FRotator LastFrameCharacterRotator;
 	FRotator CharacterRotator;

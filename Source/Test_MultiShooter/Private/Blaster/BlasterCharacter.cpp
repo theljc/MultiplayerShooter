@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "Blaster/BlasterComponent/CombatComponent.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
@@ -53,6 +54,8 @@ ABlasterCharacter::ABlasterCharacter()
 	NetUpdateFrequency = 66.f;
 	// 当需要复制的属性不经常更改时，降低更新的频率
 	MinNetUpdateFrequency = 33.f;
+
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 	
 }
 
@@ -87,10 +90,11 @@ void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
-	if (BlasterPlayerController)
+	UpdateHUDHealth();
+
+	if (HasAuthority())
 	{
-		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}
 	
 }
@@ -192,7 +196,74 @@ float ABlasterCharacter::CalcSpeed()
 
 void ABlasterCharacter::OnRep_Health()
 {
+	PlayHitReactMontage();
+	UpdateHUDHealth();
+}
+
+void ABlasterCharacter::UpdateHUDHealth()
+{
+	BlasterPlayerController = BlasterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Controller)) : BlasterPlayerController;
+
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void ABlasterCharacter::Elim()
+{
+	MulticastEliminate();
+}
+
+void ABlasterCharacter::MulticastEliminate_Implementation()
+{
+	bElimed = true;
+    PlayElimMontage();
+	GetWorldTimerManager().SetTimer(
+		ElimTimer,
+        this,
+        &ABlasterCharacter::ElimTimeFinished,
+        ElimDelay);
+
+	if (DissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 70.f);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve Value"), -0.5f);
+	}
+	StartDissolve();
 	
+}
+
+void ABlasterCharacter::ElimTimeFinished()
+{
+	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
+	if (BlasterGameMode)
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+}
+
+void ABlasterCharacter::UpdateDissolveMaterial(float DissolveValue)
+{
+	if (DynamicDissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve Value"), DissolveValue);
+	}
+	
+}
+
+void ABlasterCharacter::StartDissolve()
+{
+	// 时间轴的通道触发时调用回调函数
+	DissolveTrack.BindDynamic(this, &ABlasterCharacter::UpdateDissolveMaterial);
+	if (DissolveCurve and DissolveTimeline)
+	{
+		// 给时间轴绑定曲线作为通道
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->Play();
+	}
 }
 
 void ABlasterCharacter::AimingOffset(float DeltaTime)
@@ -362,6 +433,37 @@ void ABlasterCharacter::PlayHitReactMontage()
 	}
 }
 
+void ABlasterCharacter::PlayElimMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ElimMontage)
+	{
+		AnimInstance->Montage_Play(ElimMontage);
+	}
+	
+}
+
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
+                                      class AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUDHealth();
+	PlayHitReactMontage();
+
+	if (Health <= 0.f)
+	{
+		ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
+		if (BlasterGameMode)
+		{
+			BlasterPlayerController = BlasterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Controller)) : BlasterPlayerController;
+			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(Controller);
+
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+		}
+	}
+	
+}
+
 void ABlasterCharacter::Jump()
 {
 	if (bIsCrouched)
@@ -380,11 +482,6 @@ void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 	{
 		CombatComponent->EquippedWeapon(OverlappingWeapon);
 	}
-}
-
-void ABlasterCharacter::NetMulticast_OnHit_Implementation()
-{
-	PlayHitReactMontage();
 }
 
 // Called every frame

@@ -19,6 +19,9 @@ public:
 	AProjectile();
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere)
+	float Damage;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
@@ -43,5 +46,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	USoundCue* ImpactSound;
+
+
 	
 };

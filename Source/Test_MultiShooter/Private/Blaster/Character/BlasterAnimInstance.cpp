@@ -38,6 +38,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsAiming =  BlasterCharacter->IsAiming();
 	TurnInPlace = BlasterCharacter->GetTurnInPlace();
 	bRotateRootBone = BlasterCharacter->ShouldRotateRootBone();
+	bElimed = BlasterCharacter->IsElimed();
 
 	// 计算角色速度方向和控制器方向的差量，用于判断移动方向
 	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();

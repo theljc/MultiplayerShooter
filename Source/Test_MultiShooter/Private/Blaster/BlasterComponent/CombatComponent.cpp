@@ -22,20 +22,9 @@ UCombatComponent::UCombatComponent()
 	
 }
 
-
-void UCombatComponent::OnRep_EquippedWeapon()
-{
-	if (EquipWeapon && Character)
-	{
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-	}
-	
-}
-
 void UCombatComponent::Fire()
 {
-	if (bCanFire)
+	if (CanFire())
 	{
 		bCanFire = false;
 		// FHitResult HitResult;
@@ -148,38 +137,12 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 		}
 	}
 
-	// if (CharacterPlayerController == nullptr)
-	// {
-	// 	CharacterPlayerController = Cast<ABlasterPlayerController>(Character->Controller);
-	// 	if (CharacterPlayerController)
-	// 	{
-	// 		if (CharacterHUD == nullptr)
-	// 		{
-	// 			CharacterHUD = Cast<ABlasterHUD>(CharacterPlayerController->GetHUD());
-	// 			if (CharacterHUD)
-	// 			{
-	// 				if (EquipWeapon)
-	// 				{
-	// 					if (CharacterHUD)
-	// 					{
-	// 						HUDPackage.CrossHairs = EquipWeapon->CrossHairs;
-	// 					}
-	// 					else
-	// 					{
-	// 						HUDPackage.CrossHairs = nullptr;
-	// 					}
-	// 				}
-	// 	
-	// 				
-	// 			}
-	// 		}
-	// 	}
-	// }
-	
+}
 
-
-
-	
+bool UCombatComponent::CanFire()
+{
+	if (EquipWeapon == nullptr) return false;
+	return !EquipWeapon->IsAmmoEmpty() || !bCanFire;
 }
 
 void UCombatComponent::BeginPlay()
@@ -272,7 +235,11 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 void UCombatComponent::EquippedWeapon(AWeapon* WeaponToEquipped)
 {
 	if (Character == nullptr || WeaponToEquipped == nullptr) return;
-
+	if (EquipWeapon)
+	{
+		EquipWeapon->Dropped();
+	}
+	
 	EquipWeapon = WeaponToEquipped;
 	EquipWeapon->SetWeaponState(EWeaponState::EWC_Equipped);
 	const USkeletalMeshSocket* WeaponSocket = Character->GetMesh()->GetSocketByName(FName("WeaponSocket"));
@@ -281,8 +248,28 @@ void UCombatComponent::EquippedWeapon(AWeapon* WeaponToEquipped)
 		WeaponSocket->AttachActor(EquipWeapon, Character->GetMesh());
 	}
 	EquipWeapon->SetOwner(Character);
+	EquipWeapon->SetHUDAmmo();
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
+	
+}
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquipWeapon && Character)
+	{
+		// 由于复制到客户端时无法确定 WeaponState 和 Attach 哪个先执行
+		// 所以要确保 WeaponState 在 Attach 之前被设置，因为模拟物理的 Actor 不能被 Attach
+		EquipWeapon->SetWeaponState(EWeaponState::EWC_Equipped);
+		const USkeletalMeshSocket* WeaponSocket = Character->GetMesh()->GetSocketByName(FName("WeaponSocket"));
+		if (WeaponSocket)
+		{
+			WeaponSocket->AttachActor(EquipWeapon, Character->GetMesh());
+		}
+		
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 	
 }
 

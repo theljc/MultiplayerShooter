@@ -39,6 +39,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UParticleSystem> TracerSystem;
 
+	UPROPERTY()
 	TObjectPtr<UParticleSystemComponent> TracerSystemComponent;
 
 	UPROPERTY(EditAnywhere)

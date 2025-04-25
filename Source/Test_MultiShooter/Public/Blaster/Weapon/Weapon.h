@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class ABlasterPlayerController;
+class ABlasterCharacter;
 class ACasing;
 class UWidgetComponent;
 class USphereComponent;
@@ -29,7 +31,10 @@ public:
 	void ShowPickUpWidget(bool bShow);
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void OnRep_Owner() override;
 	virtual void Fire(const FVector& HitTarget);
+	void Dropped();
+	void SetHUDAmmo();
 
 	UPROPERTY(EditAnywhere, Category = CrossHairs)
 	UTexture2D* CrossHairs;
@@ -85,16 +90,35 @@ private:
 
 	UPROPERTY(EditAnywhere, Category=Combat)
 	float ZoomedInterpSpeed = 20.f;
+
+	UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_Ammo)
+	int32 Ammo;
+
+	UFUNCTION()
+	void OnRep_Ammo();
+
+	void SpendRound();
+	
+	UPROPERTY(EditAnywhere)
+	int32 MagCapacity;
+	
+	UPROPERTY()
+	TObjectPtr<ABlasterCharacter> BlasterOwnerCharacter;
+
+	UPROPERTY()
+	TObjectPtr<ABlasterPlayerController> BlasterOwnerPlayerController;
 	
 	// 武器状态改变时复制
 	UFUNCTION()
 	void OnRep_WeaponState();
-	
+
+
 public:
 	void SetWeaponState(EWeaponState NewWeaponState);
 	FORCEINLINE USphereComponent* GetSphereComponent() const { return SphereComponent; }
 	FORCEINLINE TObjectPtr<USkeletalMeshComponent> GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomedInterpSpeed() const { return ZoomedInterpSpeed; }
-	
+	bool IsAmmoEmpty();
 };
+

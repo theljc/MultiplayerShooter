@@ -9,6 +9,8 @@
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
+class ABlasterPlayerState;
+class USoundCue;
 class ABlasterPlayerController;
 class UCombatComponent;
 class AWeapon;
@@ -47,6 +49,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void Jump() override;
+	virtual void Destroyed() override;
 
 	void MoveForward(const FInputActionValue& Value);
 	void MoveRight(const FInputActionValue& Value);
@@ -66,7 +69,7 @@ protected:
 
 	void SimProxiesTurn();
 
-	
+	void PollInit();
 	
 	float AO_Yaw;
 	float Interp_AO_Yaw;
@@ -131,6 +134,7 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	UPROPERTY()
 	TObjectPtr<ABlasterPlayerController> BlasterPlayerController;
 
 	bool bElimed = false;
@@ -163,7 +167,17 @@ private:
 	UPROPERTY(EditAnywhere, Category=Elim)
 	TObjectPtr<UMaterialInstance> DissolveMaterialInstance;
 
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UParticleSystem> ElimBotEffect;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UParticleSystemComponent> ElimBotEffectComponent;
 	
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<USoundBase> ElimBotSound;
+
+	TObjectPtr<ABlasterPlayerState> BlasterPlayerState;
 	
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> MappingContext;
@@ -217,6 +231,8 @@ public:
 	FORCEINLINE UCameraComponent* GetCamera() { return Camera; }
 	FORCEINLINE bool ShouldRotateRootBone() { return bRotateRootBone; }
 	FORCEINLINE bool IsElimed() { return bElimed; }
+	FORCEINLINE float GetHealth() { return Health; }
+	FORCEINLINE float GetMaxHealth() { return MaxHealth; }
 
 	TObjectPtr<AWeapon> GetWeapon();
 

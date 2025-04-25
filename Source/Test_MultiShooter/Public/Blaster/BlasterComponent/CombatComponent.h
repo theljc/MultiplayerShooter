@@ -49,6 +49,8 @@ public:
 	void TraceUnderCrossHair(FHitResult& HitResult);
 
 	void SetHUDCrosshairs(float DeltaTime);
+
+	bool CanFire();
 	
 protected:
 	virtual void BeginPlay() override;

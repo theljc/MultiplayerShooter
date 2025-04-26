@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "WeaponTypes.h"
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class USoundCue;
 class ABlasterPlayerController;
 class ABlasterCharacter;
 class ACasing;
@@ -35,6 +37,7 @@ public:
 	virtual void Fire(const FVector& HitTarget);
 	void Dropped();
 	void SetHUDAmmo();
+	void AddAmmo(int32 AmmoAmount);
 
 	UPROPERTY(EditAnywhere, Category = CrossHairs)
 	UTexture2D* CrossHairs;
@@ -44,6 +47,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category=Combat)
 	bool bAutoFire = true;
+	
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<USoundCue> EquippedSound;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -112,6 +118,8 @@ private:
 	UFUNCTION()
 	void OnRep_WeaponState();
 
+	UPROPERTY(EditAnywhere)
+	EWeaponTypes WeaponTypes;
 
 public:
 	void SetWeaponState(EWeaponState NewWeaponState);
@@ -119,6 +127,10 @@ public:
 	FORCEINLINE TObjectPtr<USkeletalMeshComponent> GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomedInterpSpeed() const { return ZoomedInterpSpeed; }
+	FORCEINLINE EWeaponTypes GetWeaponType() const { return WeaponTypes; }
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+	
 	bool IsAmmoEmpty();
 };
 

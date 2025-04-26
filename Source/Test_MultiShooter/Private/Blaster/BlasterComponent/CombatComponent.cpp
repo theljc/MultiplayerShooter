@@ -12,6 +12,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Sound/SoundCue.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -39,6 +40,102 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	bFireButtonPressed = bPressed;
 
 	if (bFireButtonPressed and EquipWeapon)
+	{
+		Fire();
+	}
+	
+}
+
+void UCombatComponent::Reload()
+{
+	if (CarriedAmmo > 0 and CombatState != ECombatState::ECS_Reloading)
+	{
+		Server_Reload();
+	}
+}
+
+void UCombatComponent::HandleReload()
+{
+	if (Character)
+	{
+		Character->PlayReloadMontage();
+	}
+}
+
+int32 UCombatComponent::AmountToReload()
+{
+	if (EquipWeapon == nullptr) return 0;
+
+	// 最大弹药量减去当前弹药量，就是可装载的弹药量
+	int32 RoomInMag = EquipWeapon->GetMagCapacity() - EquipWeapon->GetAmmo();
+	if (CarriedAmmoMap.Contains(EquipWeapon->GetWeaponType()))
+	{
+		// 获得携带的弹药量
+		int32 CarriedAmmoAmount = CarriedAmmoMap[EquipWeapon->GetWeaponType()];
+		int32 Least = FMath::Min(RoomInMag, CarriedAmmoAmount);
+		return FMath::Clamp(RoomInMag, 0, Least);
+	}
+	
+	return 0;
+}
+
+void UCombatComponent::UpdateAmmoValues()
+{
+	if (Character == nullptr || EquipWeapon == nullptr) return;
+
+	int32 ReloadAmount = AmountToReload();
+	if (CarriedAmmoMap.Contains(EquipWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquipWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquipWeapon->GetWeaponType()];
+	}
+
+	CharacterPlayerController = CharacterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Character->Controller)) : CharacterPlayerController;
+	if (CharacterPlayerController)
+	{
+		CharacterPlayerController->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	EquipWeapon->AddAmmo(ReloadAmount);
+
+}
+
+void UCombatComponent::Server_Reload_Implementation()
+{
+	if (Character == nullptr || EquipWeapon == nullptr) return;
+
+	CombatState = ECombatState::ECS_Reloading;
+	HandleReload();
+}
+
+void UCombatComponent::OnRep_CombatState()
+{
+	switch (CombatState)
+	{
+	case ECombatState::ECS_Reloading:
+		HandleReload();
+		break;
+	case ECombatState::ECS_Unoccupied:
+		if (bFireButtonPressed)
+		{
+			Fire();
+		}
+		break;
+	}
+	
+}
+
+void UCombatComponent::FinishReloading()
+{
+	if (Character == nullptr) return;
+
+	if (Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+		UpdateAmmoValues();
+	}
+
+	if (bFireButtonPressed)
 	{
 		Fire();
 	}
@@ -118,7 +215,7 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 {
 	if (Character == nullptr || Character->Controller == nullptr) return;
 	
-	CharacterPlayerController = CharacterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : CharacterPlayerController;
+	CharacterPlayerController = CharacterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Character->Controller)) : CharacterPlayerController;
 	if (CharacterPlayerController)
 	{
 		CharacterHUD = CharacterHUD == nullptr ? Cast<ABlasterHUD>(CharacterPlayerController->GetHUD()) : CharacterHUD;
@@ -142,7 +239,7 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 bool UCombatComponent::CanFire()
 {
 	if (EquipWeapon == nullptr) return false;
-	return !EquipWeapon->IsAmmoEmpty() || !bCanFire;
+	return !EquipWeapon->IsAmmoEmpty() && bCanFire &&  CombatState == ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::BeginPlay()
@@ -156,6 +253,11 @@ void UCombatComponent::BeginPlay()
 		{
 			DefaultFOV = Character->GetCamera()->FieldOfView;
 			CurrentFOV = DefaultFOV;
+		}
+
+		if (Character->HasAuthority())
+		{
+			InitializeCarriedAmmo();
 		}
 	}
 	
@@ -201,8 +303,28 @@ void UCombatComponent::FireTimerFinish()
 	{
 		Fire();
 	}
+
+	if (EquipWeapon->IsAmmoEmpty())
+	{
+		Reload();
+	}
+	
 }
 
+void UCombatComponent::OnRep_CarriedAmmo()
+{
+	CharacterPlayerController = CharacterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Character->Controller)) : CharacterPlayerController;
+	if (CharacterPlayerController)
+	{
+		CharacterPlayerController->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UCombatComponent::InitializeCarriedAmmo()
+{
+	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_AssaultRifle, StartARAmmo);
+	
+}
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -229,7 +351,19 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 
 	DOREPLIFETIME(UCombatComponent, EquipWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
+	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
+	DOREPLIFETIME(UCombatComponent, CombatState);
 	
+}
+
+void UCombatComponent::PlayEquipWeaponSound()
+{
+	if (EquipWeapon->EquippedSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this,
+		                                      EquipWeapon->EquippedSound,
+		                                      Character->GetActorLocation());
+	}
 }
 
 void UCombatComponent::EquippedWeapon(AWeapon* WeaponToEquipped)
@@ -249,6 +383,25 @@ void UCombatComponent::EquippedWeapon(AWeapon* WeaponToEquipped)
 	}
 	EquipWeapon->SetOwner(Character);
 	EquipWeapon->SetHUDAmmo();
+
+	if (CarriedAmmoMap.Contains(EquipWeapon->GetWeaponType()))
+	{
+		CarriedAmmo = CarriedAmmoMap[EquipWeapon->GetWeaponType()];
+	}
+
+	CharacterPlayerController = CharacterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Character->Controller)) : CharacterPlayerController;
+	if (CharacterPlayerController)
+	{
+		CharacterPlayerController->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	PlayEquipWeaponSound();
+
+	if (EquipWeapon->IsAmmoEmpty())
+	{
+		Reload();
+	}
+	
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 	
@@ -266,6 +419,8 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		{
 			WeaponSocket->AttachActor(EquipWeapon, Character->GetMesh());
 		}
+
+		PlayEquipWeaponSound();
 		
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;

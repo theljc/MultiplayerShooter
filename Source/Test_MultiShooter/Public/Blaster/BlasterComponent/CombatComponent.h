@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blaster/BlasterTypes/CombatState.h"
 #include "Blaster/HUD/BlasterHUD.h"
+#include "Blaster/Weapon/WeaponTypes.h"
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
@@ -24,6 +26,7 @@ public:
 	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	void PlayEquipWeaponSound();
 
 	void EquippedWeapon(AWeapon* WeaponToEquipped);
 
@@ -39,6 +42,13 @@ public:
 
 	void FireButtonPressed(bool bPressed);
 
+	void Reload();
+
+	void HandleReload();
+
+	int32 AmountToReload();
+	void UpdateAmmoValues();
+
 	UFUNCTION(Server, Reliable)
 	void Server_Fire(const FVector_NetQuantize& TraceHitTarget);
 
@@ -51,6 +61,9 @@ public:
 	void SetHUDCrosshairs(float DeltaTime);
 
 	bool CanFire();
+
+	UFUNCTION(Server, Reliable)
+	void Server_Reload();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -58,7 +71,7 @@ protected:
 
 private:
 	ABlasterCharacter* Character;
-	ABlasterPlayerController* CharacterPlayerController;
+	TObjectPtr<ABlasterPlayerController> CharacterPlayerController;
 	ABlasterHUD* CharacterHUD;
 	
 	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
@@ -98,6 +111,29 @@ private:
 	void StartFireTimer();
 
 	void FireTimerFinish();
+
+	UPROPERTY(ReplicatedUsing=OnRep_CarriedAmmo)
+	int32 CarriedAmmo;
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	// TMap 无法被复制
+	TMap<EWeaponTypes, int32> CarriedAmmoMap;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartARAmmo = 30;
+
+	void InitializeCarriedAmmo();
+
+	UPROPERTY(ReplicatedUsing=OnRep_CombatState)
+	ECombatState CombatState = ECombatState::ECS_Unoccupied;
+
+	UFUNCTION()
+	void OnRep_CombatState();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 	
 };
 

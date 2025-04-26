@@ -96,6 +96,14 @@ void AWeapon::SetHUDAmmo()
 	}
 }
 
+void AWeapon::AddAmmo(int32 AmmoAmount)
+{
+	// Ammo 改变时通过 OnRep 函数更新客户端 HUD
+	Ammo = FMath::Clamp(Ammo + AmmoAmount, 0, MagCapacity);
+	// 更新服务器上的 HUD
+	SetHUDAmmo();
+}
+
 void AWeapon::SpendRound()
 {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);

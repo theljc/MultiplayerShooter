@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurnInPlace.h"
+#include "BlasterTypes/CombatState.h"
 #include "Components/TimelineComponent.h"
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
@@ -64,6 +65,7 @@ protected:
 	void SetTurnInPlace(float DeltaTime);
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void ReloadButtonPressed();
 
 	void HideCameraIfCharacterClosed();
 
@@ -105,7 +107,7 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_EquipButtonPressed();
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCombatComponent> CombatComponent;
 
 	UPROPERTY(EditAnywhere)
@@ -116,6 +118,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category=Combat)
 	TObjectPtr<UAnimMontage> ElimMontage;
+
+	UPROPERTY(EditAnywhere, Category=Combat)
+	TObjectPtr<UAnimMontage> ReloadMontage;
 
 	bool bRotateRootBone;
 	float TurnThreshold = 0.5f;
@@ -208,6 +213,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Fire;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Reload;
 	
 public:
 	// 设置 OverlappingWeapon，由于 OverlappingWeapon 已经被注册为需要复制的变量，当 OverlappingWeapon 改变时，会根据条件复制到指定客户端
@@ -220,6 +228,7 @@ public:
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReactMontage();
 	void PlayElimMontage();
+	void PlayReloadMontage();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
@@ -233,7 +242,8 @@ public:
 	FORCEINLINE bool IsElimed() { return bElimed; }
 	FORCEINLINE float GetHealth() { return Health; }
 	FORCEINLINE float GetMaxHealth() { return MaxHealth; }
-
+	ECombatState GetCombatState() const;
+	
 	TObjectPtr<AWeapon> GetWeapon();
 
 	FVector GetHitTarget();

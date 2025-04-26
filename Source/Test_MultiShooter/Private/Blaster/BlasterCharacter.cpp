@@ -380,6 +380,14 @@ void ABlasterCharacter::FireButtonReleased()
 	}
 }
 
+void ABlasterCharacter::ReloadButtonPressed()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->Reload();
+	}
+}
+
 void ABlasterCharacter::HideCameraIfCharacterClosed()
 {
 	if (!IsLocallyControlled()) return;
@@ -491,6 +499,24 @@ void ABlasterCharacter::PlayElimMontage()
 	
 }
 
+void ABlasterCharacter::PlayReloadMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage)
+	{
+		FName SectionName;
+		switch (CombatComponent->EquipWeapon->GetWeaponType())
+		{
+		case EWeaponTypes::EWT_AssaultRifle:
+			SectionName = FName("Rifle");
+			break;
+			
+		}
+		AnimInstance->Montage_Play(ReloadMontage);
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
                                       class AController* InstigatorController, AActor* DamageCauser)
 {
@@ -586,6 +612,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Started, this, &ABlasterCharacter::Jump);
 	EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Started, this, &ABlasterCharacter::FireButtonPressed);
 	EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Completed, this, &ABlasterCharacter::FireButtonReleased);
+	EnhancedInputComponent->BindAction(IA_Reload, ETriggerEvent::Completed, this, &ABlasterCharacter::ReloadButtonPressed);
 	
 }
 
@@ -632,6 +659,13 @@ bool ABlasterCharacter::IsWeaponEquipped()
 bool ABlasterCharacter::IsAiming()
 {
 	return (CombatComponent && CombatComponent->bAiming);
+}
+
+ECombatState ABlasterCharacter::GetCombatState() const
+{
+	if (CombatComponent == nullptr) return ECombatState::ECS_Max;
+	
+	return CombatComponent->CombatState;
 }
 
 TObjectPtr<AWeapon> ABlasterCharacter::GetWeapon()

@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "BlasterPlayerController.generated.h"
 
+class UCharacterOverlay;
 class ABlasterHUD;
 /**
  * 
@@ -20,13 +21,78 @@ public:
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
+	void SetHUDMatchCountDown(float CountDownTime);
+	void SetHUDAnnouncementCountDown(float CountDownTime);
 	
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void ReceivedPlayer() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	// 同步服务器的时间
+	float GetServerTime();
+
+	void OnMatchStateSet(FName State);
+	void HandleMatchStart();
+	void HandleCooldown();
+
 protected:
 	virtual void BeginPlay() override;
+	void CheckTimeSync(float DeltaSeconds);
 	virtual void OnPossess(APawn* InPawn) override;
+	void SetHUDTime();
+	void PollInit();
 
+	// 向服务器请求当前服务器上的时间
+	UFUNCTION(Server, Reliable)
+	void Server_RequestServerTime(float TimeOfClientRequest);
+
+	// 客户端同步服务器的时间
+	UFUNCTION(Client, Reliable)
+	void Client_ReportServerTime(float TimeOfClientRequest, float TimeServerReceived);
+
+	// 客户端和服务器之间的时间延迟
+	float ClientServerDelta = 0.f;
+
+	// 客户端同步服务器时间的频率
+	UPROPERTY(EditAnywhere, Category=Time)
+	float TimeSyncFrequency = 5.f;
+
+	// 距离上一次同步服务器时间过了多少时间
+	float TimeSyncRunningTime = 0.f;
+
+	UFUNCTION(Server, Reliable)
+	void Server_CheckMatchState();
+
+	UFUNCTION(Client, Reliable)
+	void Client_JoinMidGame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
+	
 private:
 	UPROPERTY()
-	ABlasterHUD* BlasterHUD;
+	TObjectPtr<ABlasterHUD> BlasterHUD;
+
+	UPROPERTY()
+	TObjectPtr<UCharacterOverlay> CharacterOverlay;
+
+	// 判断是否已经初始化
+	bool bInitializeCharacterOverlay = false;
+
+	// 保存的数据，在 HUD 有效时赋值
+	float HUDHealth;
+	float HUDMaxHealth;
+	float HUDScore;
+	int32 HUDDefeats;
+	
+	float MatchTime = 0.f;
+	float WarmUpTime = 0.f;
+	float LevelStartingTime = 0.f;
+	float CooldownTime = 0.f;
+
+	uint32 CountdownInt = 0;
+
+	UPROPERTY(ReplicatedUsing=OnRep_MatchState)
+	FName MatchState;
+
+	UFUNCTION()
+	void OnRep_MatchState();
 	
 };

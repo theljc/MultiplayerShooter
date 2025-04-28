@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "BlasterPlayerController.generated.h"
 
+class ABlasterGameMode;
 class UCharacterOverlay;
 class ABlasterHUD;
 /**
@@ -72,6 +73,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UCharacterOverlay> CharacterOverlay;
+
+	UPROPERTY()
+	TObjectPtr<ABlasterGameMode> BlasterGameMode;
 
 	// 判断是否已经初始化
 	bool bInitializeCharacterOverlay = false;

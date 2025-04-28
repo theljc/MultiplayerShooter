@@ -27,16 +27,20 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void PlayerEliminated(ABlasterCharacter* ElimmedPlayer, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* ElimmedPlayer, AController* ElimmedController);
-	
+
+	// 游戏一开始的热身时间
 	UPROPERTY(EditDefaultsOnly)
 	float WarmUpTime = 10.f;
 
+	// 每局游戏的持续时间
 	UPROPERTY(EditDefaultsOnly)
 	float MatchTime = 120.f;
-	
+
+	// 每局重新开始的间隔时间
 	UPROPERTY(EditDefaultsOnly)
 	float CooldownTime = 10.f;
-	
+
+	// 保存关卡开始的时间
 	float LevelStartingTime = 0.f;
 
 protected:
@@ -45,5 +49,8 @@ protected:
 	
 private:
 	float CountDownTime = 0.f;
+
+public:
+	FORCEINLINE float GetCountDownTime() { return CountDownTime; }
 	
 };

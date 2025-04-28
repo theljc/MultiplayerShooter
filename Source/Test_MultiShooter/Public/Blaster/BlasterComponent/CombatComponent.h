@@ -70,8 +70,11 @@ protected:
 	
 
 private:
+	UPROPERTY()
 	ABlasterCharacter* Character;
+	UPROPERTY()
 	TObjectPtr<ABlasterPlayerController> CharacterPlayerController;
+	UPROPERTY()
 	ABlasterHUD* CharacterHUD;
 	
 	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
@@ -123,6 +126,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	int32 StartARAmmo = 30;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartRocketAmmo = 0;
 
 	void InitializeCarriedAmmo();
 

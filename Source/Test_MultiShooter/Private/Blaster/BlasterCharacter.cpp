@@ -69,6 +69,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	// 复制条件为 COND_OwnerOnly，表示仅拥有这个 OverlappingWeapon 的 Character 所在的客户端才会被复制
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
+	DOREPLIFETIME(ABlasterCharacter, bDisableGameplay);
 	
 }
 
@@ -104,6 +105,8 @@ void ABlasterCharacter::BeginPlay()
 
 void ABlasterCharacter::MoveForward(const FInputActionValue& Value)
 {
+	if (bDisableGameplay) return;
+
 	if (Controller != nullptr)
 	{
 		const FRotator Rotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -114,6 +117,8 @@ void ABlasterCharacter::MoveForward(const FInputActionValue& Value)
 
 void ABlasterCharacter::MoveRight(const FInputActionValue& Value)
 {
+	if (bDisableGameplay) return;
+
 	if (Controller != nullptr)
 	{
 		const FRotator Rotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -134,6 +139,8 @@ void ABlasterCharacter::LookUP(const FInputActionValue& Value)
 
 void ABlasterCharacter::EquippedButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (CombatComponent)
 	{
 		if (HasAuthority())
@@ -151,6 +158,8 @@ void ABlasterCharacter::EquippedButtonPressed()
 
 void ABlasterCharacter::CrouchButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -163,6 +172,8 @@ void ABlasterCharacter::CrouchButtonPressed()
 
 void ABlasterCharacter::AimingButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (CombatComponent)
 	{
 		CombatComponent->SetAiming(true);
@@ -171,6 +182,8 @@ void ABlasterCharacter::AimingButtonPressed()
 
 void ABlasterCharacter::AimingButtonReleased()
 {
+	if (bDisableGameplay) return;
+
 	if (CombatComponent)
 	{
 		CombatComponent->SetAiming(false);
@@ -245,8 +258,12 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 	}
 	StartDissolve();
 
+	bDisableGameplay = true;
 	GetCharacterMovement()->DisableMovement();
-	GetCharacterMovement()->StopMovementImmediately();
+	if (CombatComponent)
+	{
+		CombatComponent->FireButtonPressed(false);
+	}
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -271,7 +288,7 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 
 void ABlasterCharacter::ElimTimeFinished()
 {
-	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
+	BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
 	if (BlasterGameMode)
 	{
 		BlasterGameMode->RequestRespawn(this, Controller);
@@ -366,6 +383,8 @@ void ABlasterCharacter::SetTurnInPlace(float DeltaTime)
 
 void ABlasterCharacter::FireButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (CombatComponent)
 	{
 		CombatComponent->FireButtonPressed(true);
@@ -374,6 +393,8 @@ void ABlasterCharacter::FireButtonPressed()
 
 void ABlasterCharacter::FireButtonReleased()
 {
+	if (bDisableGameplay) return;
+
 	if (CombatComponent)
 	{
 		CombatComponent->FireButtonPressed(false);
@@ -382,6 +403,8 @@ void ABlasterCharacter::FireButtonReleased()
 
 void ABlasterCharacter::ReloadButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (CombatComponent)
 	{
 		CombatComponent->Reload();
@@ -462,6 +485,31 @@ void ABlasterCharacter::PollInit()
 	
 }
 
+void ABlasterCharacter::RotateInPlace(float DeltaTime)
+{
+	if (bDisableGameplay)
+	{
+		bUseControllerRotationYaw = false;
+		TurnInPlace = ETurnInPlace::ETIP_NotTurn;
+		return;
+	}
+	
+	// 能用大于来比较是因为 ENetRole 是枚举值
+	if (GetLocalRole() > ROLE_SimulatedProxy and IsLocallyControlled())
+	{
+		AimingOffset(DeltaTime);
+	}
+	else
+	{
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > 0.25f)
+		{
+			OnRep_ReplicatedMovement();
+		}
+		CalcAO_Pitch();
+	}
+}
+
 void ABlasterCharacter::PlayFireMontage(bool bAiming)
 {
 	if (CombatComponent == nullptr || CombatComponent->EquipWeapon == nullptr) return;
@@ -526,7 +574,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 
 	if (Health <= 0.f)
 	{
-		ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
+		BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
 		if (BlasterGameMode)
 		{
 			BlasterPlayerController = BlasterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Controller)) : BlasterPlayerController;
@@ -540,6 +588,8 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 
 void ABlasterCharacter::Jump()
 {
+	if (bDisableGameplay) return;
+
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -558,6 +608,13 @@ void ABlasterCharacter::Destroyed()
 	{
 		ElimBotEffectComponent->DestroyComponent();
 	}
+
+	BlasterGameMode = BlasterGameMode == nullptr ? TObjectPtr<ABlasterGameMode>(GetWorld()->GetAuthGameMode<ABlasterGameMode>()) : BlasterGameMode;
+	bool bMatchNotInProgress = BlasterGameMode && BlasterGameMode->GetMatchState() != MatchState::InProgress;
+	if (CombatComponent && CombatComponent->EquipWeapon && bMatchNotInProgress)
+	{
+		CombatComponent->EquipWeapon->Destroy();
+	}
 	
 }
 
@@ -574,20 +631,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 能用大于来比较是因为 ENetRole 是枚举值
-	if (GetLocalRole() > ROLE_SimulatedProxy and IsLocallyControlled())
-	{
-		AimingOffset(DeltaTime);
-	}
-	else
-	{
-		TimeSinceLastMovementReplication += DeltaTime;
-		if (TimeSinceLastMovementReplication > 0.25f)
-		{
-			OnRep_ReplicatedMovement();
-		}
-		CalcAO_Pitch();
-	}
+	RotateInPlace(DeltaTime);
 	
 	HideCameraIfCharacterClosed();
 

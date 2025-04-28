@@ -10,6 +10,7 @@
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
+class ABlasterGameMode;
 class ABlasterPlayerState;
 class USoundCue;
 class ABlasterPlayerController;
@@ -46,6 +47,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminate();
 
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -72,6 +76,8 @@ protected:
 	void SimProxiesTurn();
 
 	void PollInit();
+
+	void RotateInPlace(float DeltaTime);
 	
 	float AO_Yaw;
 	float Interp_AO_Yaw;
@@ -182,7 +188,11 @@ private:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<USoundBase> ElimBotSound;
 
+	UPROPERTY()
 	TObjectPtr<ABlasterPlayerState> BlasterPlayerState;
+
+	UPROPERTY()
+	TObjectPtr<ABlasterGameMode> BlasterGameMode;
 	
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> MappingContext;
@@ -242,6 +252,9 @@ public:
 	FORCEINLINE bool IsElimed() { return bElimed; }
 	FORCEINLINE float GetHealth() { return Health; }
 	FORCEINLINE float GetMaxHealth() { return MaxHealth; }
+	FORCEINLINE UCombatComponent* GetCombatComponent() { return CombatComponent; }
+	FORCEINLINE bool GetDisplayGameplay() { return bDisableGameplay; }
+	
 	ECombatState GetCombatState() const;
 	
 	TObjectPtr<AWeapon> GetWeapon();

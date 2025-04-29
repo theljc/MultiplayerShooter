@@ -3,9 +3,7 @@
 
 #include "Blaster/Weapon/Projectile.h"
 
-#include "Blaster/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Test_MultiShooter/Test_MultiShooter.h"
@@ -24,8 +22,7 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
 
-	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(FName("ProjectileMovementComponent"));
-	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+
 	
 }
 
@@ -72,6 +69,11 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 {
 	GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString::Printf(TEXT("%s"), *OtherActor->GetName()));
 
+	Destroy();
+}
+
+void AProjectile::DestroyTimerFinished()
+{
 	Destroy();
 }
 

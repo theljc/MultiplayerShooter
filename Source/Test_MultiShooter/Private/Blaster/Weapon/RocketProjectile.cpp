@@ -3,13 +3,20 @@
 
 #include "Blaster/Weapon/RocketProjectile.h"
 
+#include "Blaster/Weapon/RocketMovementComponent.h"
+#include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 ARocketProjectile::ARocketProjectile()
 {
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
 	StaticMesh->SetupAttachment(RootComponent);
 	StaticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(FName("RocketMovementComponent"));
+	RocketMovementComponent->bRotationFollowsVelocity = true;
+	RocketMovementComponent->SetIsReplicated(true);
 	
 }
 
@@ -32,8 +39,8 @@ void ARocketProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 				Damage,
 				10.f,
 				GetActorLocation(),
-				500.f,
 				200.f,
+				500.f,
 				1.f,
 				UDamageType::StaticClass(),
 				TArray<AActor*>(),
@@ -42,6 +49,31 @@ void ARocketProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 				);
 		}
 	}
+
+	GetWorldTimerManager().SetTimer(
+		DestroyTimerHandle,
+		this,
+		&AProjectile::DestroyTimerFinished,
+		3.f);
+
+	if (ImpactParticle)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, GetActorTransform());
+	}
+
+	if (ImpactSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+	}
 	
-	Super::OnHit(HitComponent, OtherActor, OtherComp, NormalImpulse, HitResult);
+	StaticMesh->SetVisibility(false);
+	CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	
 }
+
+void ARocketProjectile::Destroyed()
+{
+	
+}
+

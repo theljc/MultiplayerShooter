@@ -23,11 +23,11 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<USoundCue> HitSound;
+
+	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
+
 	
 private:
-	UPROPERTY(EditAnywhere)
-	float Damage = 10.f;
-
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UParticleSystem> BeamParticles;
 

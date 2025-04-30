@@ -39,8 +39,8 @@ void ARocketProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 				Damage,
 				10.f,
 				GetActorLocation(),
-				200.f,
-				500.f,
+				DamageInnerRadius,
+				DamageOuterRadius,
 				1.f,
 				UDamageType::StaticClass(),
 				TArray<AActor*>(),
@@ -50,11 +50,7 @@ void ARocketProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 		}
 	}
 
-	GetWorldTimerManager().SetTimer(
-		DestroyTimerHandle,
-		this,
-		&AProjectile::DestroyTimerFinished,
-		3.f);
+	StartDestroyTimer();
 
 	if (ImpactParticle)
 	{

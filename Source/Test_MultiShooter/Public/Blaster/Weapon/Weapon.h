@@ -40,7 +40,7 @@ public:
 	void AddAmmo(int32 AmmoAmount);
 
 	UPROPERTY(EditAnywhere, Category = CrossHairs)
-	UTexture2D* CrossHairs;
+	TObjectPtr<UTexture2D> CrossHairs;
 
 	UPROPERTY(EditAnywhere, Category=Combat)
 	float FireDelay = 0.15f;
@@ -50,8 +50,20 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<USoundCue> EquippedSound;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	bool bUseScatter = false;
 	
 protected:
+	UPROPERTY(EditAnywhere)
+	float Damage = 10.f;
+	
+	UPROPERTY(EditAnywhere, Category="Weapon Scatter")
+	float DistanceToSphere = 800.f;
+	
+	UPROPERTY(EditAnywhere, Category="Weapon Scatter")
+	float SphereRadius = 75.f;
+	
 	virtual void BeginPlay() override;
 
 	UFUNCTION()

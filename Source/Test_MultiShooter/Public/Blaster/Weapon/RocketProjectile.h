@@ -20,13 +20,6 @@ public:
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult) override;
 	virtual void Destroyed() override;
 
-private:
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UStaticMeshComponent> StaticMesh;
 
-	FTimerHandle DestroyTimerHandle;
-
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<URocketMovementComponent> RocketMovementComponent;
 	
 };

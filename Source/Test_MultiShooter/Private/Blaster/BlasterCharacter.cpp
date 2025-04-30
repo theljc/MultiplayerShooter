@@ -283,6 +283,13 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 			ElimBotSound,
 			GetActorLocation());
 	}
+
+	bool bSniperAiming = IsLocallyControlled() and CombatComponent and CombatComponent->bAiming and CombatComponent->EquipWeapon and CombatComponent->EquipWeapon->GetWeaponType() == EWeaponTypes::EWT_Sniper;
+	if (bSniperAiming)
+	{
+		CombatComponent->CharacterHUD->SetHidden(false);
+		ShowSniperScope(false);
+	}
 	
 }
 
@@ -562,6 +569,15 @@ void ABlasterCharacter::PlayReloadMontage()
 			SectionName = FName("Rifle");
 			break;
 		case EWeaponTypes::EWT_Pistol:
+			SectionName = FName("Rifle");
+			break;
+		case EWeaponTypes::EWT_ShotGun:
+			SectionName = FName("Rifle");
+			break;
+		case EWeaponTypes::EWT_Sniper:
+			SectionName = FName("Rifle");
+			break;
+		case EWeaponTypes::EWT_GrenadeLaunch:
 			SectionName = FName("Rifle");
 			break;
 		default:

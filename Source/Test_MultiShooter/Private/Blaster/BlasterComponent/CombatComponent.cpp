@@ -326,6 +326,9 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_RocketLaunch, StartRocketAmmo);
 	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_Pistol, StartPistolAmmo);
 	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_SubmachineGun, StartSubmachineAmmo);
+	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_ShotGun, StartShotGunAmmo);
+	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_Sniper, StartSniperAmmo);
+	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_GrenadeLaunch, StartGrenadeAmmo);
 	
 }
 
@@ -433,6 +436,8 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
+	if (Character == nullptr and EquipWeapon == nullptr) return;
+	
 	bAiming = bIsAiming;
 	// 调用 RPC 函数通知服务器修改客户端的变量
 	Server_Aiming(bIsAiming);
@@ -440,6 +445,12 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	if (Character)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+
+	if (Character->IsLocallyControlled() and EquipWeapon->GetWeaponType() == EWeaponTypes::EWT_Sniper)
+	{
+		CharacterHUD->SetHidden(bIsAiming);
+		Character->ShowSniperScope(bIsAiming);
 	}
 	
 }

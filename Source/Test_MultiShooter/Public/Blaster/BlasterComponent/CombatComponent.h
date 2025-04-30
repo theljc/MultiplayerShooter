@@ -9,8 +9,6 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
-#define TRACE_LENGTH 80000.f
-
 class ABlasterHUD;
 class ABlasterPlayerController;
 class AWeapon;
@@ -20,7 +18,7 @@ class TEST_MULTISHOOTER_API UCombatComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UCombatComponent();
 	friend class ABlasterCharacter;
 	
@@ -135,6 +133,15 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	int32 StartSubmachineAmmo = 45;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartShotGunAmmo = 20;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartSniperAmmo = 10;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartGrenadeAmmo = 15;
 	
 	void InitializeCarriedAmmo();
 

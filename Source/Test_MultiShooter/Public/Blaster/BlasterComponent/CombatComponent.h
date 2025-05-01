@@ -25,6 +25,11 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	void PlayEquipWeaponSound();
+	void DropEquippedWeapon();
+	void AttachActorToRightHand(AActor* ActorToAttach);
+	void AttachActorToLeftHand(AActor* ActorToAttach);
+	void UpdateCarriedAmmo();
+	void ReloadEmptyWeapon();
 
 	void EquippedWeapon(AWeapon* WeaponToEquipped);
 
@@ -45,7 +50,18 @@ public:
 	void HandleReload();
 
 	int32 AmountToReload();
+
+	void ThrowGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void Server_ThrowGrenade();
+
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeFinished();
+	
 	void UpdateAmmoValues();
+	void JumpToShotGunEnd();
+	void UpdateShotGunAmmoValues();
 
 	UFUNCTION(Server, Reliable)
 	void Server_Fire(const FVector_NetQuantize& TraceHitTarget);
@@ -62,6 +78,9 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_Reload();
+
+	UFUNCTION(BlueprintCallable)
+	void ShotGunShellReload();
 	
 protected:
 	virtual void BeginPlay() override;

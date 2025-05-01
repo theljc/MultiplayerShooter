@@ -53,6 +53,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
 	bool bUseScatter = false;
+
+	void EnableCustomDepth(bool bEnable);
 	
 protected:
 	UPROPERTY(EditAnywhere)
@@ -116,7 +118,8 @@ private:
 	void OnRep_Ammo();
 
 	void SpendRound();
-	
+
+	// 子弹容量
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
 	
@@ -144,5 +147,7 @@ public:
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 	
 	bool IsAmmoEmpty();
+	bool IsAmmoFull();
+	
 };
 

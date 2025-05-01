@@ -418,6 +418,16 @@ void ABlasterCharacter::ReloadButtonPressed()
 	}
 }
 
+void ABlasterCharacter::ThrowGrenadeButtonPressed()
+{
+	if (bDisableGameplay) return;
+
+	if (CombatComponent)
+	{
+		CombatComponent->ThrowGrenade();
+	}
+}
+
 void ABlasterCharacter::HideCameraIfCharacterClosed()
 {
 	if (!IsLocallyControlled()) return;
@@ -566,19 +576,19 @@ void ABlasterCharacter::PlayReloadMontage()
 			SectionName = FName("Rifle");
 			break;
 		case EWeaponTypes::EWT_RocketLaunch:
-			SectionName = FName("Rifle");
+			SectionName = FName("RocketLauncher");
 			break;
 		case EWeaponTypes::EWT_Pistol:
-			SectionName = FName("Rifle");
+			SectionName = FName("Pistol");
 			break;
 		case EWeaponTypes::EWT_ShotGun:
-			SectionName = FName("Rifle");
+			SectionName = FName("Shotgun");
 			break;
 		case EWeaponTypes::EWT_Sniper:
-			SectionName = FName("Rifle");
+			SectionName = FName("SniperRifle");
 			break;
 		case EWeaponTypes::EWT_GrenadeLaunch:
-			SectionName = FName("Rifle");
+			SectionName = FName("GrenadeLauncher");
 			break;
 		default:
 			SectionName = FName("Rifle");
@@ -587,6 +597,15 @@ void ABlasterCharacter::PlayReloadMontage()
 		
 		AnimInstance->Montage_Play(ReloadMontage);
 		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayThrowGrenadeMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && GrenadeMontage)
+	{
+		AnimInstance->Montage_Play(GrenadeMontage);
 	}
 }
 
@@ -682,6 +701,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Started, this, &ABlasterCharacter::FireButtonPressed);
 	EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Completed, this, &ABlasterCharacter::FireButtonReleased);
 	EnhancedInputComponent->BindAction(IA_Reload, ETriggerEvent::Completed, this, &ABlasterCharacter::ReloadButtonPressed);
+	EnhancedInputComponent->BindAction(IA_ThrowGrenade, ETriggerEvent::Completed, this, &ABlasterCharacter::ThrowGrenadeButtonPressed);
 	
 }
 

@@ -73,6 +73,7 @@ protected:
 	void FireButtonPressed();
 	void FireButtonReleased();
 	void ReloadButtonPressed();
+	void ThrowGrenadeButtonPressed();
 
 	void HideCameraIfCharacterClosed();
 
@@ -130,6 +131,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category=Combat)
 	TObjectPtr<UAnimMontage> ReloadMontage;
+
+	UPROPERTY(EditAnywhere, Category=Combat)
+	TObjectPtr<UAnimMontage> GrenadeMontage;
 
 	bool bRotateRootBone;
 	float TurnThreshold = 0.5f;
@@ -229,6 +233,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Reload;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_ThrowGrenade;
 	
 public:
 	// 设置 OverlappingWeapon，由于 OverlappingWeapon 已经被注册为需要复制的变量，当 OverlappingWeapon 改变时，会根据条件复制到指定客户端
@@ -242,6 +249,7 @@ public:
 	void PlayHitReactMontage();
 	void PlayElimMontage();
 	void PlayReloadMontage();
+	void PlayThrowGrenadeMontage();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
@@ -257,6 +265,7 @@ public:
 	FORCEINLINE float GetMaxHealth() { return MaxHealth; }
 	FORCEINLINE UCombatComponent* GetCombatComponent() { return CombatComponent; }
 	FORCEINLINE bool GetDisplayGameplay() { return bDisableGameplay; }
+	FORCEINLINE UAnimMontage* GetReloadMontage() { return ReloadMontage; }
 	
 	ECombatState GetCombatState() const;
 	

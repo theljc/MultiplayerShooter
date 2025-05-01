@@ -39,9 +39,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	TurnInPlace = BlasterCharacter->GetTurnInPlace();
 	bRotateRootBone = BlasterCharacter->ShouldRotateRootBone();
 	bElimed = BlasterCharacter->IsElimed();
-	bUseFABRIK = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
-	bUseAimOffset = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading and !BlasterCharacter->GetDisplayGameplay();
-	bTransformRightHand = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading and !BlasterCharacter->GetDisplayGameplay();
+	bUseFABRIK = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+	bUseAimOffset = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied and !BlasterCharacter->GetDisplayGameplay();
+	bTransformRightHand = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied and !BlasterCharacter->GetDisplayGameplay();
 
 	// 计算角色速度方向和控制器方向的差量，用于判断移动方向
 	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();

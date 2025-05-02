@@ -200,6 +200,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<ABlasterGameMode> BlasterGameMode;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UStaticMeshComponent> AttachGrenade;
 	
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> MappingContext;
@@ -266,6 +269,7 @@ public:
 	FORCEINLINE UCombatComponent* GetCombatComponent() { return CombatComponent; }
 	FORCEINLINE bool GetDisplayGameplay() { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() { return ReloadMontage; }
+	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() { return AttachGrenade; }
 	
 	ECombatState GetCombatState() const;
 	

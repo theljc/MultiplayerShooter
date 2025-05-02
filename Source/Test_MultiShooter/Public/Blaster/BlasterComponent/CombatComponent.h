@@ -9,6 +9,7 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
+class AProjectile;
 class ABlasterHUD;
 class ABlasterPlayerController;
 class AWeapon;
@@ -81,11 +82,20 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ShotGunShellReload();
+
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void Server_LaunchGrenade(const FVector_NetQuantize& Target);
 	
 protected:
 	virtual void BeginPlay() override;
-	
+	void ShowAttachGrenade(bool bShowGrenade);
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AProjectile> GrenadeClass;
+	
 private:
 	UPROPERTY()
 	ABlasterCharacter* Character;
@@ -172,6 +182,20 @@ private:
 
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
+
+	UPROPERTY(ReplicatedUsing=OnRep_Grenades)
+	int32 Grenades = 4;
+
+	UFUNCTION()
+	void OnRep_Grenades();
+	
+	UPROPERTY(EditAnywhere)
+	int32 MaxGrenades = 4;
+
+	void UpdateHUDGrenades();
+
+public:
+	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	
 };
 

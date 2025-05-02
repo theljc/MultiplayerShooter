@@ -36,5 +36,8 @@ public:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> MatchCountDownText;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> GrenadeText;
 	
 };

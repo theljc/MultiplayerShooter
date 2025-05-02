@@ -20,7 +20,6 @@ public:
 	AProjectile();
 	virtual void Tick(float DeltaTime) override;
 
-
 	UPROPERTY(EditAnywhere)
 	float Damage;
 	

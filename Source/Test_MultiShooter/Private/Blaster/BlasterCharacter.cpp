@@ -59,6 +59,10 @@ ABlasterCharacter::ABlasterCharacter()
 	MinNetUpdateFrequency = 33.f;
 
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
+
+	AttachGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AttachGrenade"));
+	AttachGrenade->SetupAttachment(GetMesh(), TEXT("GrenadeSocket"));
+	AttachGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
 }
 
@@ -99,6 +103,11 @@ void ABlasterCharacter::BeginPlay()
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
+	}
+
+	if (AttachGrenade)
+	{
+		AttachGrenade->SetVisibility(false);
 	}
 	
 }
@@ -612,6 +621,8 @@ void ABlasterCharacter::PlayThrowGrenadeMontage()
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
                                       class AController* InstigatorController, AActor* DamageCauser)
 {
+	if (bElimed) return;
+	
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
 	PlayHitReactMontage();

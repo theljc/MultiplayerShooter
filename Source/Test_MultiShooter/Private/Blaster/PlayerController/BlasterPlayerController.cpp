@@ -129,6 +129,12 @@ void ABlasterPlayerController::PollInit()
 					SetHUDHealth(HUDHealth, HUDMaxHealth);
 					SetHUDScore(HUDScore);
 					SetHUDDefeats(HUDDefeats);
+
+					ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
+					if (BlasterCharacter and BlasterCharacter->GetCombatComponent())
+					{
+						SetHUDGrenades(BlasterCharacter->GetCombatComponent()->GetGrenades());
+					}
 				}
 			}
 		}
@@ -270,6 +276,21 @@ void ABlasterPlayerController::SetHUDAnnouncementCountDown(float CountDownTime)
 		FString CountDownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 		BlasterHUD->Announcement->WarmUpTime->SetText(FText::FromString(CountDownText));
 	}
+}
+
+void ABlasterPlayerController::SetHUDGrenades(int32 Grenades)
+{
+	BlasterHUD = BlasterHUD == nullptr ? TObjectPtr<ABlasterHUD>(Cast<ABlasterHUD>(GetHUD())) : BlasterHUD;
+	if (BlasterHUD and BlasterHUD->CharacterOverlay)
+	{
+		FString GrenadesText = FString::Printf(TEXT("%d"), Grenades);
+		BlasterHUD->CharacterOverlay->GrenadeText->SetText(FText::FromString(GrenadesText));
+	}
+	else
+	{
+		HUDGrenades = Grenades;
+	}
+	
 }
 
 void ABlasterPlayerController::Server_RequestServerTime_Implementation(float TimeOfClientRequest)

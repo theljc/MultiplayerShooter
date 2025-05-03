@@ -10,6 +10,7 @@
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
+class UBuffComponent;
 class ABlasterGameMode;
 class ABlasterPlayerState;
 class USoundCue;
@@ -120,6 +121,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCombatComponent> CombatComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBuffComponent> BuffComponent;
+
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 
@@ -150,7 +154,7 @@ private:
 	float Health = 100.f;
 
 	UFUNCTION()
-	void OnRep_Health();
+	void OnRep_Health(float LastHealth);
 
 	UPROPERTY()
 	TObjectPtr<ABlasterPlayerController> BlasterPlayerController;
@@ -265,11 +269,13 @@ public:
 	FORCEINLINE bool ShouldRotateRootBone() { return bRotateRootBone; }
 	FORCEINLINE bool IsElimed() { return bElimed; }
 	FORCEINLINE float GetHealth() { return Health; }
+	FORCEINLINE void SetHealth(float NewHealth) { Health = NewHealth; }
 	FORCEINLINE float GetMaxHealth() { return MaxHealth; }
 	FORCEINLINE UCombatComponent* GetCombatComponent() { return CombatComponent; }
 	FORCEINLINE bool GetDisplayGameplay() { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() { return AttachGrenade; }
+	FORCEINLINE UBuffComponent* GetBuffComponent() { return BuffComponent; }
 	
 	ECombatState GetCombatState() const;
 	

@@ -405,6 +405,21 @@ void UCombatComponent::Server_LaunchGrenade_Implementation(const FVector_NetQuan
 	}
 }
 
+void UCombatComponent::PickUpAmmo(EWeaponTypes WeaponTypes, int32 AmmoAmount)
+{
+	if (CarriedAmmoMap.Contains(WeaponTypes))
+	{
+		CarriedAmmoMap[WeaponTypes] = FMath::Clamp(CarriedAmmoMap[WeaponTypes] + AmmoAmount, 0, MaxCarriedAmmo);
+		UpdateCarriedAmmo();
+	}
+
+	if (EquipWeapon and EquipWeapon->IsAmmoEmpty() and EquipWeapon->GetWeaponType() == WeaponTypes)
+	{
+		Reload();
+	}
+	
+}
+
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();

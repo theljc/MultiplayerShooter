@@ -64,6 +64,15 @@ void UBuffComponent::BuffJump(float BuffJumpVelocity, float BuffTime)
 	MulticastJumpBuff(BuffJumpVelocity);
 }
 
+void UBuffComponent::BuffShield(float ShieldAmount, float ShieldReplenishTime)
+{
+	bShield = true;
+
+	ShieldReplenishRate = ShieldAmount / ShieldReplenishTime;
+	ShieldReplenishAmount += ShieldAmount;
+	
+}
+
 void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CrouchSpeed)
 {
 	InitialBaseSpeed = BaseSpeed;
@@ -73,6 +82,23 @@ void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CrouchSpeed)
 void UBuffComponent::SetInitialJumpVelocity(float Velocity)
 {
 	InitialJumpVelocity = Velocity;
+}
+
+void UBuffComponent::ShieldRampUp(float DeltaTime)
+{
+	if (BlasterCharacter == nullptr or BlasterCharacter->IsElimed() or !bShield) return;
+	
+	float ShieldThisFrame = ShieldReplenishRate * DeltaTime;
+	BlasterCharacter->SetShield(FMath::Clamp(BlasterCharacter->GetShield() + ShieldThisFrame, 0, BlasterCharacter->GetMaxShield()));
+	BlasterCharacter->UpdateHUDShield();
+
+	ShieldReplenishAmount -= ShieldThisFrame;
+
+	if (ShieldReplenishAmount <= 0.f or BlasterCharacter->GetShield() >= BlasterCharacter->GetMaxShield())
+	{
+		bShield = false;
+		ShieldReplenishAmount = 0.f;
+	}
 }
 
 void UBuffComponent::ResetSpeeds()
@@ -127,6 +153,7 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	HealRampUp(DeltaTime);
+	ShieldRampUp(DeltaTime);
 	
 }
 

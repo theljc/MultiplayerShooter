@@ -46,6 +46,11 @@ private:
 
 	UPROPERTY(EditAnywhere, Category=Health)
 	TObjectPtr<UNiagaraSystem> PickUpEffect;
+
+	// 如果生成时角色已经站在生成点上，会导致碰撞球触发后直接销毁，还没来得及绑定到函数
+	FTimerHandle BindOverlapTimer;
+	float BindOverlapTime = 0.25f;
+	void BindOverlapTimerFinished();
 	
 public:
 	UPROPERTY(EditAnywhere)

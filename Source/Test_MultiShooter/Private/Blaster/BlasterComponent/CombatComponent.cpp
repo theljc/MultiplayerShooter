@@ -680,7 +680,7 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
 	}
 
-	if (Character->IsLocallyControlled() and EquipWeapon->GetWeaponType() == EWeaponTypes::EWT_Sniper)
+	if (Character->IsLocallyControlled() and EquipWeapon != nullptr and EquipWeapon->GetWeaponType() == EWeaponTypes::EWT_Sniper)
 	{
 		CharacterHUD->SetHidden(bIsAiming);
 		Character->ShowSniperScope(bIsAiming);

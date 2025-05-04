@@ -42,6 +42,8 @@ public:
 
 	virtual void OnRep_ReplicatedMovement() override;
 	void UpdateHUDHealth();
+	void UpdateHUDShield();
+	void UpdateHUDAmmo();
 
 	void Elim();
 
@@ -53,6 +55,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScope(bool bShowScope);
+
+	void SpawnDefaultWeapon();
 
 protected:
 	// Called when the game starts or when spawned
@@ -156,6 +160,15 @@ private:
 	UFUNCTION()
 	void OnRep_Health(float LastHealth);
 
+	UPROPERTY(EditAnywhere, Category="Player Stats")
+	float MaxShield = 100.f;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Shield, VisibleAnywhere, Category="Player Stats")
+	float Shield = 100.f;
+
+	UFUNCTION()
+	void OnRep_Shield(float LastShield);
+	
 	UPROPERTY()
 	TObjectPtr<ABlasterPlayerController> BlasterPlayerController;
 
@@ -207,6 +220,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> AttachGrenade;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 	
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> MappingContext;
@@ -271,6 +287,9 @@ public:
 	FORCEINLINE float GetHealth() { return Health; }
 	FORCEINLINE void SetHealth(float NewHealth) { Health = NewHealth; }
 	FORCEINLINE float GetMaxHealth() { return MaxHealth; }
+	FORCEINLINE float GetShield() { return Shield; }
+	FORCEINLINE void SetShield(float NewShield) { Shield = NewShield; }
+	FORCEINLINE float GetMaxShield() { return MaxShield; }
 	FORCEINLINE UCombatComponent* GetCombatComponent() { return CombatComponent; }
 	FORCEINLINE bool GetDisplayGameplay() { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() { return ReloadMontage; }

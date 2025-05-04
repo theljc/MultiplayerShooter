@@ -77,6 +77,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	// 复制条件为 COND_OwnerOnly，表示仅拥有这个 OverlappingWeapon 的 Character 所在的客户端才会被复制
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
+	DOREPLIFETIME(ABlasterCharacter, Shield);
 	DOREPLIFETIME(ABlasterCharacter, bDisableGameplay);
 	
 }
@@ -104,13 +105,31 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
+void ABlasterCharacter::SpawnDefaultWeapon()
+{
+	BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	UWorld* World = GetWorld();
+	if (BlasterGameMode and World and !bElimed and DefaultWeaponClass)
+	{
+		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+		DefaultWeapon->bDestroyWeapon = true;
+		if (CombatComponent)
+		{
+			CombatComponent->EquippedWeapon(DefaultWeapon);
+		}
+	}
+}
+
 // Called when the game starts or when spawned
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	SpawnDefaultWeapon();
+	
 	UpdateHUDHealth();
-
+	UpdateHUDShield();
+	UpdateHUDAmmo();
+	
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
@@ -239,6 +258,15 @@ void ABlasterCharacter::OnRep_Health(float LastHealth)
 	}
 }
 
+void ABlasterCharacter::OnRep_Shield(float LastShield)
+{
+	UpdateHUDShield();
+	if (Shield < LastShield)
+	{
+		PlayHitReactMontage();
+	}
+}
+
 void ABlasterCharacter::UpdateHUDHealth()
 {
 	BlasterPlayerController = BlasterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Controller)) : BlasterPlayerController;
@@ -249,11 +277,39 @@ void ABlasterCharacter::UpdateHUDHealth()
 	}
 }
 
+void ABlasterCharacter::UpdateHUDShield()
+{
+	BlasterPlayerController = BlasterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Controller)) : BlasterPlayerController;
+
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDShield(Shield, MaxShield);
+	}
+}
+
+void ABlasterCharacter::UpdateHUDAmmo()
+{
+	BlasterPlayerController = BlasterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Controller)) : BlasterPlayerController;
+
+	if (BlasterPlayerController and CombatComponent and CombatComponent->EquipWeapon)
+	{
+		BlasterPlayerController->SetHUDCarriedAmmo(CombatComponent->CarriedAmmo);
+		BlasterPlayerController->SetHUDWeaponAmmo(CombatComponent->EquipWeapon->GetAmmo());
+	}
+}
+
 void ABlasterCharacter::Elim()
 {
 	if (CombatComponent and CombatComponent->EquipWeapon)
 	{
-		CombatComponent->EquipWeapon->Dropped();
+		if (CombatComponent->EquipWeapon->bDestroyWeapon)
+		{
+			CombatComponent->EquipWeapon->Destroy();
+		}
+		else
+		{
+			CombatComponent->EquipWeapon->Dropped();
+		}
 	}
 	
 	MulticastEliminate();
@@ -636,9 +692,24 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
                                       class AController* InstigatorController, AActor* DamageCauser)
 {
 	if (bElimed) return;
+	float DamageToHealth = Damage;
+	if (Shield > 0.f)
+	{
+		if (Shield >= Damage)
+		{
+			Shield = FMath::Clamp(Shield - DamageToHealth, 0, MaxShield);
+			DamageToHealth = 0.f;
+		}
+		else
+		{
+			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0, Damage);
+			Shield = 0.f;
+		}
+	}
 	
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
 	UpdateHUDHealth();
+	UpdateHUDShield();
 	PlayHitReactMontage();
 
 	if (Health <= 0.f)

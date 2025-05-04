@@ -18,6 +18,7 @@ class TEST_MULTISHOOTER_API ABlasterPlayerController : public APlayerController
 	GENERATED_BODY()
 public:
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDShield(float Shield, float MaxShield);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDWeaponAmmo(int32 Ammo);
@@ -79,14 +80,25 @@ private:
 	TObjectPtr<ABlasterGameMode> BlasterGameMode;
 
 	// 判断是否已经初始化
-	bool bInitializeCharacterOverlay = false;
+	// bool bInitializeCharacterOverlay = false;
 
 	// 保存的数据，在 HUD 有效时赋值
 	float HUDHealth;
+	bool bInitializeHealth = false;
 	float HUDMaxHealth;
 	float HUDScore;
+	bool bInitializeScore = false;
 	int32 HUDDefeats;
+	bool bInitializeDefeats = false;
 	int32 HUDGrenades;
+	bool bInitializeGrenades = false;
+	float HUDShield;
+	bool bInitializeShield = false;
+	float HUDMaxShield;
+	float HUDCarriedAmmo;
+	bool bInitializeCarriedAmmo = false;
+	float HUDWeaponAmmo;
+	bool bInitializeWeaponAmmo = false;
 	
 	float MatchTime = 0.f;
 	float WarmUpTime = 0.f;

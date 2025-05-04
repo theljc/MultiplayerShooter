@@ -55,7 +55,9 @@ public:
 	bool bUseScatter = false;
 
 	void EnableCustomDepth(bool bEnable);
-	
+
+	bool bDestroyWeapon = false;
+
 protected:
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;

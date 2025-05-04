@@ -22,6 +22,7 @@ public:
 	void Heal(float HealTime, float HealingAmount);
 	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime);
 	void BuffJump(float BuffJumpVelocity, float BuffTime);
+	void BuffShield(float ShieldAmount, float ShieldReplenishTime);
 	void SetInitialSpeeds(float BaseSpeed, float CrouchSpeed);
 	void SetInitialJumpVelocity(float Velocity);
 
@@ -32,10 +33,15 @@ private:
 	UPROPERTY()
 	TObjectPtr<ABlasterCharacter> BlasterCharacter;
 
-	bool bHealing;
+	bool bHealing = false;
 	float HealRate = 0.f;
 	float HealAmount = 0.f;
 	void HealRampUp(float DeltaTime);
+
+	bool bShield = false;
+	float ShieldReplenishRate = 0.f;
+	float ShieldReplenishAmount = 0.f;
+	void ShieldRampUp(float DeltaTime);
 
 	FTimerHandle SpeedBuffTimer;
 	void ResetSpeeds();

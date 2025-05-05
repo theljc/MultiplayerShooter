@@ -19,6 +19,7 @@ enum class EWeaponState : uint8
 {
 	EWC_Initial UMETA(DisplayName = "Weapon Initial"),
 	EWC_Equipped UMETA(DisplayName = "Equipped"),
+	EWC_EquipSecondary UMETA(DisplayName = "Equip Secondary"),
 	EWC_Dropped UMETA(DisplayName = "Dropped"),
 	EWC_MAX UMETA(DisplayName = "DefaultMAX"),
 };
@@ -140,6 +141,11 @@ private:
 
 public:
 	void SetWeaponState(EWeaponState NewWeaponState);
+	void OnWeaponStateSet();
+	void EquipWeapon();
+	void DropWeapon();
+	void EquipSecondaryWeapon();
+	
 	FORCEINLINE USphereComponent* GetSphereComponent() const { return SphereComponent; }
 	FORCEINLINE TObjectPtr<USkeletalMeshComponent> GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }

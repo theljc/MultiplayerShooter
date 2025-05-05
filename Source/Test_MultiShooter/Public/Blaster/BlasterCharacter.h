@@ -44,6 +44,7 @@ public:
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
 	void UpdateHUDAmmo();
+	void DropOrDestroyWeapon(AWeapon* Weapon);
 
 	void Elim();
 
@@ -295,7 +296,7 @@ public:
 	FORCEINLINE UAnimMontage* GetReloadMontage() { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() { return AttachGrenade; }
 	FORCEINLINE UBuffComponent* GetBuffComponent() { return BuffComponent; }
-	
+
 	ECombatState GetCombatState() const;
 	
 	TObjectPtr<AWeapon> GetWeapon();

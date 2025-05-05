@@ -57,15 +57,12 @@ void AWeapon::EnableCustomDepth(bool bEnable)
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (HasAuthority())
-	{
-		SphereComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-		SphereComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-		SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
-		SphereComponent->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
-	}
-
+	
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+	SphereComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
+	SphereComponent->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
+	
 	if (PickUpWidget)
 	{
 		PickUpWidget->SetVisibility(false);
@@ -145,82 +142,77 @@ void AWeapon::OnRep_Owner()
 	}
 	else
 	{
-		SetHUDAmmo();
+		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(Owner)) : BlasterOwnerCharacter;
+		if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetWeapon() && BlasterOwnerCharacter->GetWeapon() == this)
+		{
+			SetHUDAmmo();
+		}
 	}
 	
 }
 
 void AWeapon::OnRep_WeaponState()
 {
-	// 根据当前武器的状态来决定是否显示 UI
-	switch (WeaponState)
-	{
-	case EWeaponState::EWC_Equipped:
-		ShowPickUpWidget(false);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		if (WeaponTypes == EWeaponTypes::EWT_SubmachineGun)
-		{
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-		}
-		EnableCustomDepth(false);
-		break;
-	case EWeaponState::EWC_Dropped:
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetCollisionResponseToAllChannels(ECR_Block);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
-		WeaponMesh->MarkRenderStateDirty();
-		EnableCustomDepth(true);
-		break;
-	}
+	OnWeaponStateSet();
 }
 
 void AWeapon::SetWeaponState(EWeaponState NewWeaponState)
 {
 	// 武器状态改变时复制到其它客户端
 	WeaponState = NewWeaponState;
+	OnWeaponStateSet();
+	
+}
 
+void AWeapon::OnWeaponStateSet()
+{
 	// 在服务器端修改武器的状态，才能同步到客户端
 	switch (WeaponState)
 	{
 	case EWeaponState::EWC_Equipped:
-		ShowPickUpWidget(false);
-		SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		if (WeaponTypes == EWeaponTypes::EWT_SubmachineGun)
-		{
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-		}
-		EnableCustomDepth(false);
+		EquipWeapon();
+		break;
+	case EWeaponState::EWC_EquipSecondary:
+		EquipSecondaryWeapon();
 		break;
 	case EWeaponState::EWC_Dropped:
-		if (HasAuthority())
-		{
-			SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetCollisionResponseToAllChannels(ECR_Block);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
-		WeaponMesh->MarkRenderStateDirty();
-		EnableCustomDepth(true);
+		DropWeapon();
 		break;
 	}
 	
+}
+
+void AWeapon::EquipWeapon()
+{
+	ShowPickUpWidget(false);
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (WeaponTypes == EWeaponTypes::EWT_SubmachineGun)
+	{
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	}
+	EnableCustomDepth(false);
+}
+
+void AWeapon::DropWeapon()
+{
+	if (HasAuthority())
+	{
+		SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->SetCollisionResponseToAllChannels(ECR_Block);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(true);
 }
 
 bool AWeapon::IsAmmoEmpty()
@@ -265,7 +257,10 @@ void AWeapon::Fire(const FVector& HitTarget)
 		GetWorld()->SpawnActor<ACasing>(CasingClass, SocketTransform.GetLocation(), SocketTransform.GetRotation().Rotator(), SpawnParams);
 	}
 
-	SpendRound();
+	if (HasAuthority())
+	{
+		SpendRound();
+	}
 	
 }
 
@@ -277,5 +272,21 @@ void AWeapon::Dropped()
 	SetOwner(nullptr);
 	BlasterOwnerCharacter = nullptr;
 	BlasterOwnerPlayerController = nullptr;
+}
+
+void AWeapon::EquipSecondaryWeapon()
+{
+	ShowPickUpWidget(false);
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (WeaponTypes == EWeaponTypes::EWT_SubmachineGun)
+	{
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	}
+	
 }
 

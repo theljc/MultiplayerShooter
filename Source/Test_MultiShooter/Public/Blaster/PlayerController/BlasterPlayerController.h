@@ -38,9 +38,13 @@ public:
 	void HandleMatchStart();
 	void HandleCooldown();
 
+	void HighPingWarning();
+	void StopHighPingWarning();
+
 protected:
 	virtual void BeginPlay() override;
 	void CheckTimeSync(float DeltaSeconds);
+	void CheckPing(float DeltaSeconds);
 	virtual void OnPossess(APawn* InPawn) override;
 	void SetHUDTime();
 	void PollInit();
@@ -112,5 +116,18 @@ private:
 
 	UFUNCTION()
 	void OnRep_MatchState();
+
+	float HighPingRunningTime = 0.f;
+
+	UPROPERTY(EditAnywhere)
+	float HighPingDuration = 5.f;
+
+	float PingAnimationRunningTime = 0.f;
+
+	UPROPERTY(EditAnywhere)
+	float CheckPingFrequency = 20.f;
+
+	UPROPERTY(EditAnywhere)
+	float HighPingThreshold = 50.f;
 	
 };

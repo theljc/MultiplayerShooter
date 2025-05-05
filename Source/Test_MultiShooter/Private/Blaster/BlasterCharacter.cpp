@@ -182,15 +182,7 @@ void ABlasterCharacter::EquippedButtonPressed()
 
 	if (CombatComponent)
 	{
-		if (HasAuthority())
-		{
-			CombatComponent->EquippedWeapon(OverlappingWeapon);
-		}
-		else
-		{
-			// 客户端调用 RPC 函数装备武器
-			Server_EquipButtonPressed();
-		}
+		Server_EquipButtonPressed();
 	}
 	
 }
@@ -298,17 +290,32 @@ void ABlasterCharacter::UpdateHUDAmmo()
 	}
 }
 
+void ABlasterCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
+{
+	if (Weapon == nullptr) return;
+	
+	if (Weapon->bDestroyWeapon)
+	{
+		Weapon->Destroy();
+	}
+	else
+	{
+		Weapon->Dropped();
+	}
+}
+
 void ABlasterCharacter::Elim()
 {
-	if (CombatComponent and CombatComponent->EquipWeapon)
+	if (CombatComponent)
 	{
-		if (CombatComponent->EquipWeapon->bDestroyWeapon)
+		if (CombatComponent->EquipWeapon)
 		{
-			CombatComponent->EquipWeapon->Destroy();
+			DropOrDestroyWeapon(CombatComponent->EquipWeapon);
 		}
-		else
+
+		if (CombatComponent->SecondaryEquipWeapon)
 		{
-			CombatComponent->EquipWeapon->Dropped();
+			DropOrDestroyWeapon(CombatComponent->SecondaryEquipWeapon);
 		}
 	}
 	
@@ -762,7 +769,14 @@ void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 {
 	if (CombatComponent)
 	{
-		CombatComponent->EquippedWeapon(OverlappingWeapon);
+		if (OverlappingWeapon)
+		{
+			CombatComponent->EquippedWeapon(OverlappingWeapon);
+		}
+		else if (CombatComponent->ShouldSwapWeapons())
+		{
+			CombatComponent->SwapWeapons();
+		}
 	}
 }
 

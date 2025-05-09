@@ -23,9 +23,6 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<USoundCue> HitSound;
-
-	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
-
 	
 private:
 	UPROPERTY(EditAnywhere)

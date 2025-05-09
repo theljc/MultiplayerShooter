@@ -24,6 +24,17 @@ enum class EWeaponState : uint8
 	EWC_MAX UMETA(DisplayName = "DefaultMAX"),
 };
 
+UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	EFT_HitScan UMETA(DisplayName = "Hit Scan Weapon"),
+	EFT_Projectile UMETA(DisplayName = "Projectile Weapon"),
+	EFT_Shotgun UMETA(DisplayName = "Shotgun Weapon"),
+	
+	EFT_MAX UMETA(DisplayName = "DefaultMAX"),
+	
+};
+
 UCLASS()
 class TEST_MULTISHOOTER_API AWeapon : public AActor
 {
@@ -58,6 +69,11 @@ public:
 	void EnableCustomDepth(bool bEnable);
 
 	bool bDestroyWeapon = false;
+
+	UPROPERTY(EditAnywhere)
+	EFireType FireType;
+
+	FVector TraceEndWithScatter(const FVector& HitTarget);
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -114,18 +130,25 @@ private:
 	UPROPERTY(EditAnywhere, Category=Combat)
 	float ZoomedInterpSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_Ammo)
+	// 此属性在客户端预测
+	UPROPERTY(EditAnywhere)
 	int32 Ammo;
 
-	UFUNCTION()
-	void OnRep_Ammo();
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAmmo(int32 ServerAmmo);
 
+	UFUNCTION(Client, Reliable)
+	void ClientAddAmmo(int32 AmmoToAdd);
+	
 	void SpendRound();
 
 	// 子弹容量
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
-	
+
+	// 用于客户端预测 Ammo 属性时，标记自上一次服务器同步以来有多少子弹被消耗了
+	int32 Sequence = 0;
+
 	UPROPERTY()
 	TObjectPtr<ABlasterCharacter> BlasterOwnerCharacter;
 

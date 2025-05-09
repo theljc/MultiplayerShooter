@@ -40,6 +40,10 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bRotateRootBone = BlasterCharacter->ShouldRotateRootBone();
 	bElimed = BlasterCharacter->IsElimed();
 	bUseFABRIK = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+	if (BlasterCharacter->IsLocallyControlled() and BlasterCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade)
+	{
+		bUseFABRIK = !BlasterCharacter->IsLocallyReloading();
+	}
 	bUseAimOffset = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied and !BlasterCharacter->GetDisplayGameplay();
 	bTransformRightHand = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied and !BlasterCharacter->GetDisplayGameplay();
 

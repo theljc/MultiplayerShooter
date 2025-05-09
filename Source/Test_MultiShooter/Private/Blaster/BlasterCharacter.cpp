@@ -860,6 +860,13 @@ bool ABlasterCharacter::IsAiming()
 	return (CombatComponent && CombatComponent->bAiming);
 }
 
+bool ABlasterCharacter::IsLocallyReloading()
+{
+	if (CombatComponent == nullptr) return false;
+
+	return CombatComponent->bLocallyReloading;
+}
+
 ECombatState ABlasterCharacter::GetCombatState() const
 {
 	if (CombatComponent == nullptr) return ECombatState::ECS_Max;

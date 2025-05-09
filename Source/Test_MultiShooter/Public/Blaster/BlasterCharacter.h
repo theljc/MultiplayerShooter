@@ -296,7 +296,8 @@ public:
 	FORCEINLINE UAnimMontage* GetReloadMontage() { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() { return AttachGrenade; }
 	FORCEINLINE UBuffComponent* GetBuffComponent() { return BuffComponent; }
-
+	bool IsLocallyReloading();
+	
 	ECombatState GetCombatState() const;
 	
 	TObjectPtr<AWeapon> GetWeapon();

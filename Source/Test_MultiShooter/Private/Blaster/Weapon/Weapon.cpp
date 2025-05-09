@@ -10,6 +10,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 AWeapon::AWeapon()
@@ -52,6 +53,29 @@ void AWeapon::EnableCustomDepth(bool bEnable)
 	{
 		WeaponMesh->SetRenderCustomDepth(bEnable);
 	}
+}
+
+FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
+{
+	FTransform SocketTransform = GetWeaponMesh()->GetSocketTransform(FName("MuzzleFlash"));
+	FVector TraceStart = SocketTransform.GetLocation();
+	
+	FVector ToTargetNormalize = (HitTarget - TraceStart).GetSafeNormal();
+	FVector SphereCenter = TraceStart + ToTargetNormalize * DistanceToSphere;
+	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
+	FVector EndLoc = SphereCenter + RandVec;
+	FVector ToEndLoc = EndLoc - TraceStart;
+
+	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 6, FColor::Red, true);
+	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
+	DrawDebugLine(GetWorld(),
+		TraceStart,
+		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
+		FColor::Cyan, true);
+
+	// 除以 Size 为了防止浮点数溢出
+	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
+
 }
 
 void AWeapon::BeginPlay()
@@ -112,22 +136,43 @@ void AWeapon::AddAmmo(int32 AmmoAmount)
 	Ammo = FMath::Clamp(Ammo + AmmoAmount, 0, MagCapacity);
 	// 更新服务器上的 HUD
 	SetHUDAmmo();
+	ClientAddAmmo(AmmoAmount);
 }
 
 void AWeapon::SpendRound()
 {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
+	if (HasAuthority())
+	{
+		ClientUpdateAmmo(Ammo);
+	}
+	else
+	{
+		++Sequence;
+	}
 }
 
-void AWeapon::OnRep_Ammo()
+void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 {
+	if (HasAuthority()) return;
+	
+	Ammo = ServerAmmo;
+	--Sequence;
+	Ammo -= Sequence;
+	SetHUDAmmo();
+}
+
+void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
+{
+	if (HasAuthority()) return;
+
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(GetOwner())) : BlasterOwnerCharacter;
-	if (BlasterOwnerCharacter and BlasterOwnerCharacter->GetCombatComponent() and IsAmmoFull())
+	if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombatComponent() && IsAmmoFull())
 	{
 		BlasterOwnerCharacter->GetCombatComponent()->JumpToShotGunEnd();
 	}
-	
 	SetHUDAmmo();
 }
 
@@ -236,7 +281,6 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
-	DOREPLIFETIME(AWeapon, Ammo);
 	
 }
 
@@ -257,10 +301,7 @@ void AWeapon::Fire(const FVector& HitTarget)
 		GetWorld()->SpawnActor<ACasing>(CasingClass, SocketTransform.GetLocation(), SocketTransform.GetRotation().Rotator(), SpawnParams);
 	}
 
-	if (HasAuthority())
-	{
-		SpendRound();
-	}
+	SpendRound();
 	
 }
 

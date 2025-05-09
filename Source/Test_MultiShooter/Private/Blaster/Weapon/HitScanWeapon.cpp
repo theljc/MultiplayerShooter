@@ -5,7 +5,6 @@
 
 #include "Blaster/BlasterCharacter.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 
@@ -15,7 +14,7 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 	if (World)
 	{
 		// FVector End = TraceStart + (HitTarget - TraceStart) * 1.25f;
-		FVector End = bUseScatter ? TraceEndWithScatter(TraceStart, HitTarget) : TraceStart + (HitTarget - TraceStart) * 1.25f;
+		FVector End = bUseScatter ? TraceEndWithScatter(HitTarget) : TraceStart + (HitTarget - TraceStart) * 1.25f;
 
 		World->LineTraceSingleByChannel(
 			OutHit,
@@ -118,22 +117,3 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 
 }
 
-FVector AHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget)
-{
-	FVector ToTargetNormalize = (HitTarget - TraceStart).GetSafeNormal();
-	FVector SphereCenter = TraceStart + ToTargetNormalize * DistanceToSphere;
-	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
-	FVector EndLoc = SphereCenter + RandVec;
-	FVector ToEndLoc = EndLoc - TraceStart;
-
-	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 6, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
-	DrawDebugLine(GetWorld(),
-		TraceStart,
-		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
-		FColor::Cyan, true);
-
-	// 除以 Size 为了防止浮点数溢出
-	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
-
-}

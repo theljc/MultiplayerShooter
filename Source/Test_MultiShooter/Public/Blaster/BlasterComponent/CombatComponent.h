@@ -48,7 +48,11 @@ public:
 	void OnRep_SecondaryEquipWeapon();
 	
 	void Fire();
+	void FireProjectileWeapon();
+	void FireHitScanWeapon();
+	void FireShotgun();
 	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
+	void ShotgunLocalFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
 
 
 	void FireButtonPressed(bool bPressed);
@@ -59,6 +63,7 @@ public:
 
 	int32 AmountToReload();
 
+	
 	void ThrowGrenade();
 
 	UFUNCTION(Server, Reliable)
@@ -78,6 +83,12 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_Fire(const FVector_NetQuantize& TraceHitTarget);
 
+	UFUNCTION(Server, Reliable)
+	void ServerShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
+	
 	void TraceUnderCrossHair(FHitResult& HitResult);
 
 	void SetHUDCrosshairs(float DeltaTime);
@@ -100,6 +111,8 @@ public:
 
 	void SwapWeapons();
 	
+	bool bLocallyReloading = false;
+
 protected:
 	virtual void BeginPlay() override;
 	void ShowAttachGrenade(bool bShowGrenade);
@@ -124,8 +137,13 @@ private:
 	UPROPERTY(ReplicatedUsing=OnRep_SecondaryEquipWeapon)
 	TObjectPtr<AWeapon> SecondaryEquipWeapon;
 	
-	UPROPERTY(Replicated)
-	bool bAiming;
+	UPROPERTY(ReplicatedUsing = OnRep_Aiming)
+	bool bAiming = false;
+
+	bool bAimButtonPressed = false;
+
+	UFUNCTION()
+	void OnRep_Aiming();
 
 	UPROPERTY(EditAnywhere)
 	float BaseWalkSpeed;

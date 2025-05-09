@@ -14,8 +14,8 @@ class TEST_MULTISHOOTER_API AShotGun : public AHitScanWeapon
 {
 	GENERATED_BODY()
 public:
-	virtual void Fire(const FVector& HitTarget) override;
-	FVector ShotgunTraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
+	virtual void FireShotgun(const TArray<FVector_NetQuantize>& HitTargets);
+	void ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")

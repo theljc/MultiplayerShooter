@@ -10,6 +10,8 @@
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
+class ULagCompensationComponent;
+class UBoxComponent;
 class UBuffComponent;
 class ABlasterGameMode;
 class ABlasterPlayerState;
@@ -59,6 +61,9 @@ public:
 
 	void SpawnDefaultWeapon();
 
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UBoxComponent>> HitCollisionBoxes;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -95,6 +100,63 @@ protected:
 
 	FRotator StartAimRotation;
 
+	/**
+	* Hit boxes used for server-side rewind
+	*/
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> head;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> pelvis;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> spine_02;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> spine_03;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> upperarm_l;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> upperarm_r;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> lowerarm_l;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> lowerarm_r;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> hand_l;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> hand_r;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> backpack;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> blanket;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> thigh_l;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> thigh_r;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> calf_l;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> calf_r;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> foot_l;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBoxComponent> foot_r;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -126,8 +188,11 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCombatComponent> CombatComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UBuffComponent> BuffComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<ULagCompensationComponent> LagCompensationComponent;
 
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
@@ -296,6 +361,8 @@ public:
 	FORCEINLINE UAnimMontage* GetReloadMontage() { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() { return AttachGrenade; }
 	FORCEINLINE UBuffComponent* GetBuffComponent() { return BuffComponent; }
+	FORCEINLINE ULagCompensationComponent* GetLagCompensationComponent() { return LagCompensationComponent; }
+
 	bool IsLocallyReloading();
 	
 	ECombatState GetCombatState() const;

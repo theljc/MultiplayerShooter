@@ -367,9 +367,9 @@ void ABlasterPlayerController::Client_ReportServerTime_Implementation(float Time
 	float TimeServerReceived)
 {
 	// 从客户端到服务器再到客户端的往返时间
-	float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
+	SingleTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
 	// 乘 0.5 来近似得到当前服务器的时间
-	float CurrentServerTime = TimeServerReceived + (0.5 * RoundTripTime);
+	float CurrentServerTime = TimeServerReceived + (0.5 * SingleTripTime);
 	ClientServerDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
 	
 }

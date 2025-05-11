@@ -3,6 +3,8 @@
 
 #include "Blaster/Weapon/ShotGun.h"
 #include "Blaster/BlasterCharacter.h"
+#include "Blaster/BlasterComponent/LagCompensationComponent.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -31,6 +33,11 @@ void AShotGun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 		}
 		
 	}
+
+	TArray<ABlasterCharacter*> HitCharacters;
+
+	// Maps Character hit to total damage
+	TMap<ABlasterCharacter*, float> DamageMap;
 	
 	for (auto HitPair : HitMap)
 	{
@@ -42,6 +49,24 @@ void AShotGun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 				this,
 				UDamageType::StaticClass()
 				);
+		}
+		
+		HitCharacters.AddUnique(HitPair.Key);
+	}
+
+	// 客户端上霰弹枪开火时应用服务器滞后补偿
+	if (!HasAuthority() && bUseServerSideRewind)
+	{
+		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(OwnerPawn)) : BlasterOwnerCharacter;
+		BlasterOwnerPlayerController = BlasterOwnerPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(InstigatorController)) : BlasterOwnerPlayerController;
+		if (BlasterOwnerPlayerController && BlasterOwnerCharacter && BlasterOwnerCharacter->GetLagCompensationComponent() && BlasterOwnerCharacter->IsLocallyControlled())
+		{
+			BlasterOwnerCharacter->GetLagCompensationComponent()->ShotgunServerScoreRequest(
+				HitCharacters,
+				Start,
+				HitTargets,
+				BlasterOwnerPlayerController->GetServerTime() - BlasterOwnerPlayerController->SingleTripTime
+			);
 		}
 	}
 	

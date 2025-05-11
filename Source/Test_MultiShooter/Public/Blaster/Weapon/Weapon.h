@@ -75,9 +75,13 @@ public:
 
 	FVector TraceEndWithScatter(const FVector& HitTarget);
 
+	
 protected:
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
+	
+	UPROPERTY(EditAnywhere)
+	float HeadShotDamage = 40.f;
 	
 	UPROPERTY(EditAnywhere, Category="Weapon Scatter")
 	float DistanceToSphere = 800.f;
@@ -105,6 +109,15 @@ protected:
 		int32 OtherBodyIndex
 		);
 
+	UPROPERTY(EditAnywhere)
+	bool bUseServerSideRewind = false;
+	
+	UPROPERTY()
+    TObjectPtr<ABlasterCharacter> BlasterOwnerCharacter;
+
+    UPROPERTY()
+    TObjectPtr<ABlasterPlayerController> BlasterOwnerPlayerController;
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category="Weapon")
 	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
@@ -149,11 +162,7 @@ private:
 	// 用于客户端预测 Ammo 属性时，标记自上一次服务器同步以来有多少子弹被消耗了
 	int32 Sequence = 0;
 
-	UPROPERTY()
-	TObjectPtr<ABlasterCharacter> BlasterOwnerCharacter;
 
-	UPROPERTY()
-	TObjectPtr<ABlasterPlayerController> BlasterOwnerPlayerController;
 	
 	// 武器状态改变时复制
 	UFUNCTION()
@@ -176,6 +185,8 @@ public:
 	FORCEINLINE EWeaponTypes GetWeaponType() const { return WeaponTypes; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+	FORCEINLINE float GetDamage() const { return Damage; }
+	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 	
 	bool IsAmmoEmpty();
 	bool IsAmmoFull();

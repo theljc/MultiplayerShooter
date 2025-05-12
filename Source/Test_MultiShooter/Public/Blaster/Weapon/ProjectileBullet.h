@@ -15,7 +15,12 @@ class TEST_MULTISHOOTER_API AProjectileBullet : public AProjectile
 	GENERATED_BODY()
 public:
 	AProjectileBullet();
+
+	// 当被 UPROPERTY 标记的属性更改时触发
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	
 protected:
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult) override;
+	virtual void BeginPlay() override;
 	
 };

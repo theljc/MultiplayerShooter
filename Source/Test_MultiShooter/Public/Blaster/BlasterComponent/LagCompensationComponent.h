@@ -88,6 +88,16 @@ public:
 		float HitTime);
 
 	/** 
+	* Projectile
+	*/
+	FServerSideRewindResult ProjectileServerSideRewind(
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime
+	);
+	
+	/** 
 	* Shotgun
 	*/
 	// 用于霰弹枪
@@ -105,6 +115,14 @@ public:
 		float HitTime
 	);
 
+	UFUNCTION(Server, Reliable)
+	void ProjectileServerScoreRequest(
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime
+	);
+	
 	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
 
 	UFUNCTION(Server, Reliable)
@@ -137,8 +155,20 @@ protected:
 		const FFramePackage& Package,
 		ABlasterCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
-		const FVector_NetQuantize& HitLocation);
+		const FVector_NetQuantize& HitLocation
+	);
 
+	/** 
+	* Projectile
+	*/
+	FServerSideRewindResult ProjectileConfirmHit(
+		const FFramePackage& Package,
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime
+	);
+	
 	/** 
 	* Shotgun
 	*/
@@ -148,6 +178,7 @@ protected:
 		const FVector_NetQuantize& TraceStart,
 		const TArray<FVector_NetQuantize>& HitLocations
 	);
+
 	
 private:
 	UPROPERTY()

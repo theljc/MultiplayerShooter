@@ -109,7 +109,7 @@ protected:
 		int32 OtherBodyIndex
 		);
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
 	
 	UPROPERTY()
@@ -117,6 +117,9 @@ protected:
 
     UPROPERTY()
     TObjectPtr<ABlasterPlayerController> BlasterOwnerPlayerController;
+
+	UFUNCTION()
+	void OnPingTooHigh(bool bPingTooHigh);
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category="Weapon")

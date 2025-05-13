@@ -110,6 +110,12 @@ public:
 	void PickUpAmmo(EWeaponTypes WeaponTypes, int32 AmmoAmount);
 
 	void SwapWeapons();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishSwap();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishSwapAttachWeapons();
 	
 	bool bLocallyReloading = false;
 

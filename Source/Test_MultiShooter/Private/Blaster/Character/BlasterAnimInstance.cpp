@@ -4,6 +4,7 @@
 #include "Blaster/Character/BlasterAnimInstance.h"
 
 #include "Blaster/BlasterCharacter.h"
+#include "Blaster/BlasterComponent/CombatComponent.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -40,7 +41,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bRotateRootBone = BlasterCharacter->ShouldRotateRootBone();
 	bElimed = BlasterCharacter->IsElimed();
 	bUseFABRIK = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
-	if (BlasterCharacter->IsLocallyControlled() and BlasterCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade)
+	bool bUseFABRIKOverride = BlasterCharacter->IsLocallyControlled() and BlasterCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade and BlasterCharacter->GetCombatState() != ECombatState::ECS_SwappingWeapon and BlasterCharacter->bFinishedSwapping;
+	if (bUseFABRIKOverride)
 	{
 		bUseFABRIK = !BlasterCharacter->IsLocallyReloading();
 	}

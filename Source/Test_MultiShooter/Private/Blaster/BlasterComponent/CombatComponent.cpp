@@ -298,6 +298,12 @@ void UCombatComponent::OnRep_CombatState()
 			AttachActorToLeftHand(EquipWeapon);
 		}
 		break;
+	case ECombatState::ECS_SwappingWeapon:
+		if (Character and !Character->IsLocallyControlled())
+		{
+			Character->PlaySwapMontage();
+		}
+		break;
 	}
 	
 }
@@ -529,10 +535,32 @@ void UCombatComponent::SwapWeapons()
 {
 	if (CombatState != ECombatState::ECS_Unoccupied || Character == nullptr || !Character->HasAuthority()) return;
 
+	Character->PlaySwapMontage();
+	Character->bFinishedSwapping = true;
+	CombatState = ECombatState::ECS_SwappingWeapon;
+
+	if (SecondaryEquipWeapon) SecondaryEquipWeapon->EnableCustomDepth(false);
+ 
 	AWeapon* TempWeapon = EquipWeapon;
 	EquipWeapon = SecondaryEquipWeapon;
 	SecondaryEquipWeapon = TempWeapon;
+	
+}
 
+void UCombatComponent::FinishSwap()
+{
+	if (Character and Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+	
+	if (Character) Character->bFinishedSwapping = true;
+	if (SecondaryEquipWeapon) SecondaryEquipWeapon->EnableCustomDepth(true);
+
+}
+
+void UCombatComponent::FinishSwapAttachWeapons()
+{
 	EquipWeapon->SetWeaponState(EWeaponState::EWC_Equipped);
 	AttachActorToRightHand(EquipWeapon);
 	EquipWeapon->SetHUDAmmo();
@@ -541,7 +569,6 @@ void UCombatComponent::SwapWeapons()
 
 	SecondaryEquipWeapon->SetWeaponState(EWeaponState::EWC_EquipSecondary);
 	AttachActorToBackpack(SecondaryEquipWeapon);
-	
 }
 
 void UCombatComponent::BeginPlay()

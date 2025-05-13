@@ -117,6 +117,11 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	}
 }
 
+void AWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = bPingTooHigh;
+}
+
 void AWeapon::SetHUDAmmo()
 {
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(GetOwner())) : BlasterOwnerCharacter;
@@ -241,6 +246,18 @@ void AWeapon::EquipWeapon()
 		WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	}
 	EnableCustomDepth(false);
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(GetOwner())) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter and bUseServerSideRewind)
+	{
+		BlasterOwnerPlayerController = BlasterOwnerPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller)) : BlasterOwnerPlayerController;
+		// 判断服务器上委托是否已绑定
+		if (BlasterOwnerPlayerController and HasAuthority() and !BlasterOwnerPlayerController->HighPingDelegate.IsBound())
+		{
+			BlasterOwnerPlayerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);
+		}
+	}
+	
 }
 
 void AWeapon::DropWeapon()
@@ -258,6 +275,18 @@ void AWeapon::DropWeapon()
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
 	WeaponMesh->MarkRenderStateDirty();
 	EnableCustomDepth(true);
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(GetOwner())) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter and bUseServerSideRewind)
+	{
+		BlasterOwnerPlayerController = BlasterOwnerPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller)) : BlasterOwnerPlayerController;
+		// 判断服务器上委托是否已绑定
+		if (BlasterOwnerPlayerController and HasAuthority() and !BlasterOwnerPlayerController->HighPingDelegate.IsBound())
+		{
+			BlasterOwnerPlayerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+		}
+	}
+	
 }
 
 bool AWeapon::IsAmmoEmpty()
@@ -281,6 +310,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME_CONDITION(AWeapon, bUseServerSideRewind, COND_OwnerOnly);
 	
 }
 
@@ -327,6 +357,17 @@ void AWeapon::EquipSecondaryWeapon()
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	}
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(GetOwner())) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter and bUseServerSideRewind)
+	{
+		BlasterOwnerPlayerController = BlasterOwnerPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller)) : BlasterOwnerPlayerController;
+		// 判断服务器上委托是否已绑定
+		if (BlasterOwnerPlayerController and HasAuthority() and !BlasterOwnerPlayerController->HighPingDelegate.IsBound())
+		{
+			BlasterOwnerPlayerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+		}
 	}
 	
 }

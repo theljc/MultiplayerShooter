@@ -19,21 +19,21 @@ AProjectileBullet::AProjectileBullet()
 	ProjectileMovementComponent->MaxSpeed = InitialSpeed;
 }
 
-void AProjectileBullet::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	FName PropertyName = PropertyChangedEvent.Property->GetFName();
-	// 判断更改的是否是 InitialSpeed 属性
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(AProjectileBullet, InitialSpeed))
-	{
-		if (ProjectileMovementComponent)
-		{
-			ProjectileMovementComponent->InitialSpeed = InitialSpeed;
-			ProjectileMovementComponent->MaxSpeed = InitialSpeed;
-		}
-	}
-}
+// void AProjectileBullet::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent)
+// {
+// 	Super::PostEditChangeChainProperty(PropertyChangedEvent);
+//
+// 	FName PropertyName = PropertyChangedEvent.Property->GetFName();
+// 	// 判断更改的是否是 InitialSpeed 属性
+// 	if (PropertyName == GET_MEMBER_NAME_CHECKED(AProjectileBullet, InitialSpeed))
+// 	{
+// 		if (ProjectileMovementComponent)
+// 		{
+// 			ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+// 			ProjectileMovementComponent->MaxSpeed = InitialSpeed;
+// 		}
+// 	}
+// }
 
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                               FVector NormalImpulse, const FHitResult& HitResult)

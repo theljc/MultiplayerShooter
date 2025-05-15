@@ -76,14 +76,15 @@ public:
 	void JumpToShotGunEnd();
 	void UpdateShotGunAmmoValues();
 
-	UFUNCTION(Server, Reliable)
-	void Server_Fire(const FVector_NetQuantize& TraceHitTarget);
+	// WithValidation 防止作弊
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_Fire(const FVector_NetQuantize& TraceHitTarget, float FireDelay);
 
 	// 多播 RPC 在服务器上执行时，会广播到服务器和所有客户端。在客户端执行时只会在自己的客户端执行，没有意义
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_Fire(const FVector_NetQuantize& TraceHitTarget);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay);
 
 	UFUNCTION(NetMulticast, Reliable)

@@ -66,7 +66,7 @@ void UCombatComponent::Fire()
 
 void UCombatComponent::FireProjectileWeapon()
 {
-	Server_Fire(HitTarget);
+	Server_Fire(HitTarget, EquipWeapon->FireDelay);
 	if (!Character->HasAuthority()) LocalFire(HitTarget);
 }
 
@@ -75,7 +75,7 @@ void UCombatComponent::FireHitScanWeapon()
 	if (EquipWeapon)
 	{
 		HitTarget = EquipWeapon->bUseScatter ? EquipWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
-		Server_Fire(HitTarget);
+		Server_Fire(HitTarget, EquipWeapon->FireDelay);
 		if (!Character->HasAuthority()) LocalFire(HitTarget);
 	}
 }
@@ -346,7 +346,7 @@ bool UCombatComponent::ShouldSwapWeapons()
 	return EquipWeapon != nullptr and SecondaryEquipWeapon != nullptr;
 }
 
-void UCombatComponent::Server_Fire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+void UCombatComponent::Server_Fire_Implementation(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
 {
 	if (EquipWeapon == nullptr) return;
 
@@ -355,6 +355,16 @@ void UCombatComponent::Server_Fire_Implementation(const FVector_NetQuantize& Tra
 		// 服务器端执行，并且广播到所有客户端
 		NetMulticast_Fire(TraceHitTarget);
 	}
+}
+
+bool UCombatComponent::Server_Fire_Validate(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
+{
+	if (EquipWeapon)
+	{
+		bool bNearlyEqual = FMath::IsNearlyEqual(EquipWeapon->FireDelay, FireDelay, 0.001f);
+		return bNearlyEqual;
+	}
+	return true;
 }
 
 void UCombatComponent::NetMulticast_Fire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -381,6 +391,16 @@ void UCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_Net
 	float FireDelay)
 {
 	MulticastShotgunFire(TraceHitTargets);
+}
+
+bool UCombatComponent::ServerShotgunFire_Validate(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay)
+{
+	if (EquipWeapon)
+	{
+		bool bNearlyEqual = FMath::IsNearlyEqual(EquipWeapon->FireDelay, FireDelay, 0.001f);
+		return bNearlyEqual;
+	}
+	return true;
 }
 
 void UCombatComponent::MulticastShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)

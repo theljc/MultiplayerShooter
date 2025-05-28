@@ -15,13 +15,13 @@ struct FBoxInformation
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FVector BoxLocation;
+	FVector BoxLocation = FVector::ZeroVector;
 
 	UPROPERTY()
-	FRotator BoxRotation;
+	FRotator BoxRotation = FRotator::ZeroRotator;
 
 	UPROPERTY()
-	FVector BoxExtent;
+	FVector BoxExtent = FVector::ZeroVector;
 };
 
 USTRUCT(BlueprintType)
@@ -30,7 +30,7 @@ struct FFramePackage
 	GENERATED_BODY()
 
 	UPROPERTY()
-	float Time;
+	float Time = 0.f;
 
 	UPROPERTY()
 	TMap<FName, FBoxInformation> HitBoxInfo;

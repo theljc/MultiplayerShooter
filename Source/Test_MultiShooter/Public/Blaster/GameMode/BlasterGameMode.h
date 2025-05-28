@@ -6,6 +6,7 @@
 #include "GameFramework/GameMode.h"
 #include "BlasterGameMode.generated.h"
 
+class ABlasterPlayerState;
 class ABlasterPlayerController;
 class ABlasterCharacter;
 
@@ -27,6 +28,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void PlayerEliminated(ABlasterCharacter* ElimmedPlayer, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* ElimmedPlayer, AController* ElimmedController);
+	// 玩家退出游戏
+	void PlayerLeftGame(ABlasterPlayerState* PlayerLeaving);
 
 	// 游戏一开始的热身时间
 	UPROPERTY(EditDefaultsOnly)

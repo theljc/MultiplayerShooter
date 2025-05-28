@@ -64,8 +64,36 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* ElimmedPlayer, ABlast
 	
 	if (AttackPlayerState and AttackPlayerState != VictimPlayerState)
 	{
+		TArray<ABlasterPlayerState*> PlayersCurrentlyInTheLead;
+		for (auto LeadPlayer : BlasterGameState->TopScoringPlayers)
+		{
+			PlayersCurrentlyInTheLead.Add(LeadPlayer);
+		}
+		
 		AttackPlayerState->AddToScore(1.f);
 		BlasterGameState->UpdateTopScore(AttackPlayerState);
+
+		if (BlasterGameState->TopScoringPlayers.Contains(AttackPlayerState))
+		{
+			ABlasterCharacter* Leader = Cast<ABlasterCharacter>(AttackPlayerState->GetPawn());
+			if (Leader)
+			{
+				Leader->MulticastGainedTheLead();
+			}
+		}
+
+		for (int32 i = 0; i < PlayersCurrentlyInTheLead.Num(); i++)
+		{
+			if (!BlasterGameState->TopScoringPlayers.Contains(PlayersCurrentlyInTheLead[i]))
+			{
+				ABlasterCharacter* Loser = Cast<ABlasterCharacter>(PlayersCurrentlyInTheLead[i]->GetPawn());
+				if (Loser)
+				{
+					Loser->MulticastLostTheLead();
+				}
+			}
+		}
+		
 	}
 
 	if (VictimPlayerState)
@@ -75,7 +103,7 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* ElimmedPlayer, ABlast
 	
 	if (ElimmedPlayer)
 	{
-		ElimmedPlayer->Elim();
+		ElimmedPlayer->Elim(false);
 	}
 	
 }
@@ -96,6 +124,24 @@ void ABlasterGameMode::RequestRespawn(ACharacter* ElimmedPlayer, AController* El
 		RestartPlayerAtPlayerStart(ElimmedController, PlayerStarts[Selection]);
 	}
 	
+}
+
+void ABlasterGameMode::PlayerLeftGame(ABlasterPlayerState* PlayerLeaving)
+{
+	if (PlayerLeaving == nullptr) return;
+	ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();
+	if (BlasterGameState && BlasterGameState->TopScoringPlayers.Contains(PlayerLeaving))
+	{
+		// 如果退出的玩家在 TopScoringPlayers 中，则从 TopScoringPlayers 中删除
+		BlasterGameState->TopScoringPlayers.Remove(PlayerLeaving);
+	}
+	
+	ABlasterCharacter* CharacterLeaving = Cast<ABlasterCharacter>(PlayerLeaving->GetPawn());
+	if (CharacterLeaving)
+	{
+		// 退出的玩家和死亡玩家统一处理
+		CharacterLeaving->Elim(true);
+	}
 }
 
 void ABlasterGameMode::BeginPlay()

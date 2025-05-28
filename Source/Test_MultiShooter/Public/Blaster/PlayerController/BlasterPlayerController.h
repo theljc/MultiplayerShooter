@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputAction.h"
 #include "GameFramework/PlayerController.h"
 #include "BlasterPlayerController.generated.h"
 
+class UReturnToMainMenu;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
 
 class ABlasterGameMode;
@@ -48,6 +50,8 @@ public:
 	FHighPingDelegate HighPingDelegate;
 	
 protected:
+	virtual void SetupInputComponent() override;
+
 	virtual void BeginPlay() override;
 	void CheckTimeSync(float DeltaSeconds);
 	void CheckPing(float DeltaSeconds);
@@ -78,8 +82,13 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void Client_JoinMidGame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
-	
+
+	void ShowReturnToMainMenu();
+
 private:
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Quit;
+	
 	UPROPERTY()
 	TObjectPtr<ABlasterHUD> BlasterHUD;
 
@@ -92,6 +101,18 @@ private:
 	// 判断是否已经初始化
 	// bool bInitializeCharacterOverlay = false;
 
+	/** 
+	* Return to main menu
+	*/
+
+	UPROPERTY(EditAnywhere, Category = HUD)
+	TSubclassOf<UUserWidget> ReturnToMainMenuWidget;
+
+	UPROPERTY()
+	TObjectPtr<UReturnToMainMenu> ReturnToMainMenu;
+
+	bool bReturnToMainMenuOpen = false;
+	
 	// 保存的数据，在 HUD 有效时赋值
 	float HUDHealth;
 	bool bInitializeHealth = false;

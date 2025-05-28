@@ -10,6 +10,8 @@
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
+class UNiagaraComponent;
+class UNiagaraSystem;
 class ULagCompensationComponent;
 class UBoxComponent;
 class UBuffComponent;
@@ -25,6 +27,8 @@ class UCameraComponent;
 struct FInputActionValue;
 class UInputMappingContext;
 class UInputAction;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
 
 UCLASS()
 class TEST_MULTISHOOTER_API ABlasterCharacter : public ACharacter, public IInteractCrosshair_Interface
@@ -48,10 +52,10 @@ public:
 	void UpdateHUDAmmo();
 	void DropOrDestroyWeapon(AWeapon* Weapon);
 
-	void Elim();
+	void Elim(bool bPlayerLeftGame);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastEliminate();
+	void MulticastEliminate(bool bPlayerLeftGame);
 
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
@@ -66,6 +70,17 @@ public:
 
 	bool bFinishedSwapping = false;
 
+	UFUNCTION(Server, Reliable)
+	void ServerLeaveGame();
+
+	FOnLeftGame OnLeftGame;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastGainedTheLead();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLostTheLead();
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -252,7 +267,8 @@ private:
 	
 	void ElimTimeFinished();
 
-	
+	bool bLeftGame = false;
+
 	FOnTimelineFloat DissolveTrack;
 
 	UPROPERTY(VisibleAnywhere)
@@ -273,6 +289,13 @@ private:
 	UPROPERTY(EditAnywhere, Category=Elim)
 	TObjectPtr<UMaterialInstance> DissolveMaterialInstance;
 
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UNiagaraSystem> CrownSystem;
+
+	UPROPERTY()
+	TObjectPtr<UNiagaraComponent> CrownComponent;
+	
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UParticleSystem> ElimBotEffect;

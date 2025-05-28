@@ -3,6 +3,7 @@
 
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 
+#include "EnhancedInputComponent.h"
 #include "Blaster/BlasterCharacter.h"
 #include "Blaster/BlasterComponent/CombatComponent.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
@@ -10,6 +11,7 @@
 #include "Blaster/HUD/Announcement.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
+#include "Blaster/HUD/ReturnToMainMenu.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
@@ -18,6 +20,17 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
+
+void ABlasterPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+	if (InputComponent)
+	{
+		UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
+		EnhancedInputComponent->BindAction(IA_Quit, ETriggerEvent::Completed, this, &ABlasterPlayerController::ShowReturnToMainMenu);
+		
+	}
+}
 
 void ABlasterPlayerController::BeginPlay()
 {
@@ -179,6 +192,29 @@ void ABlasterPlayerController::PollInit()
 		}
 	}
 	
+}
+
+void ABlasterPlayerController::ShowReturnToMainMenu()
+{
+	if (ReturnToMainMenuWidget == nullptr) return;
+
+	if (ReturnToMainMenu == nullptr)
+	{
+		ReturnToMainMenu = CreateWidget<UReturnToMainMenu>(this, ReturnToMainMenuWidget);
+	}
+	
+	if (ReturnToMainMenu)
+	{
+		bReturnToMainMenuOpen = !bReturnToMainMenuOpen;
+		if (bReturnToMainMenuOpen)
+		{
+			ReturnToMainMenu->MenuSetup();
+		}
+		else
+		{
+			ReturnToMainMenu->MenuTearDown();
+		}
+	}
 }
 
 void ABlasterPlayerController::Server_CheckMatchState_Implementation()

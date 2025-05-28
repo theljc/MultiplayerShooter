@@ -12,10 +12,10 @@ class ALobbyGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
-	ALobbyGameMode();
+	// ALobbyGameMode();
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 protected:
-	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 	
 };

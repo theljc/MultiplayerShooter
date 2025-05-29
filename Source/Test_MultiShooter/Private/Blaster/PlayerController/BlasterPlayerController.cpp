@@ -21,6 +21,11 @@
 #include "Net/UnrealNetwork.h"
 
 
+void ABlasterPlayerController::BroadcastElim(APlayerState* Attacker, APlayerState* Victim)
+{
+	ClientElimAnnouncement(Attacker, Victim);
+}
+
 void ABlasterPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -214,6 +219,51 @@ void ABlasterPlayerController::ShowReturnToMainMenu()
 		{
 			ReturnToMainMenu->MenuTearDown();
 		}
+	}
+}
+
+void ABlasterPlayerController::ClientElimAnnouncement_Implementation(APlayerState* Attacker, APlayerState* Victim)
+{
+	APlayerState* Self = GetPlayerState<APlayerState>();
+	if (Attacker && Victim && Self)
+	{
+		BlasterHUD = BlasterHUD == nullptr ? TObjectPtr<ABlasterHUD>(Cast<ABlasterHUD>(GetHUD())) : BlasterHUD;
+		if (BlasterHUD)
+		{
+			if (Attacker == Self and Victim != Self)
+			{
+				BlasterHUD->AddElimAnnouncement(TEXT("You"), Victim->GetPlayerName());
+				return;
+			}
+
+			if (Attacker != Self and Victim == Self)
+			{
+				BlasterHUD->AddElimAnnouncement(Attacker->GetPlayerName(), TEXT("You"));
+				return;
+			}
+
+			if (Attacker != Self and Victim != Self)
+			{
+				BlasterHUD->AddElimAnnouncement(Attacker->GetPlayerName(), Victim->GetPlayerName());
+				return;
+			}
+			
+			if (Attacker == Self and Victim == Self)
+			{
+				BlasterHUD->AddElimAnnouncement(TEXT("You"), TEXT("Yourself"));
+				return;
+			}
+
+			if (Attacker == Victim && Attacker != Self)
+			{
+				BlasterHUD->AddElimAnnouncement(Attacker->GetPlayerName(), "themselves");
+				return;
+			}
+			
+			BlasterHUD->AddElimAnnouncement(Attacker->GetPlayerName(), Victim->GetPlayerName());
+
+		}
+	
 	}
 }
 

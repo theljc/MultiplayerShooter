@@ -20,6 +20,7 @@ void AShotGun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 	FVector Start = SocketTransform.GetLocation();
 
 	TMap<ABlasterCharacter*, uint32> HitMap;
+	TMap<ABlasterCharacter*, uint32> HeadShotHitMap;
 	
 	for (FVector_NetQuantize HitTarget : HitTargets)
 	{
@@ -28,8 +29,17 @@ void AShotGun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
 		if (BlasterCharacter)
 		{
-			if (HitMap.Contains(BlasterCharacter)) HitMap[BlasterCharacter]++;
-			else HitMap.Emplace(BlasterCharacter, 1);
+			const bool bHeadShot = FireHit.BoneName.ToString() == FString("head");
+			if (bHeadShot)
+			{
+				if (HeadShotHitMap.Contains(BlasterCharacter)) HeadShotHitMap[BlasterCharacter]++;
+				else HeadShotHitMap.Emplace(BlasterCharacter, 1);
+			}
+			else
+			{
+				if (HitMap.Contains(BlasterCharacter)) HitMap[BlasterCharacter]++;
+				else HitMap.Emplace(BlasterCharacter, 1);
+			}
 		}
 		
 	}
@@ -43,21 +53,39 @@ void AShotGun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 	{
 		if (HitPair.Key and HasAuthority() and InstigatorController)
 		{
+			DamageMap.Emplace(HitPair.Key, HitPair.Value * Damage);
+			HitCharacters.AddUnique(HitPair.Key);
+		}
+	}
+
+	for (auto HeadShotHitPair : HeadShotHitMap)
+	{
+		if (HeadShotHitPair.Key)
+		{
+			if (DamageMap.Contains(HeadShotHitPair.Key)) DamageMap[HeadShotHitPair.Key] += HeadShotHitPair.Value * HeadShotDamage;
+			else DamageMap.Emplace(HeadShotHitPair.Key, HeadShotHitPair.Value * HeadShotDamage);
+
+			HitCharacters.AddUnique(HeadShotHitPair.Key);
+		}
+	}
+
+	for (auto DamagePair : DamageMap)
+	{
+		if (DamagePair.Key && InstigatorController)
+		{
 			bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
 			if (bCauseAuthDamage)
 			{
-				UGameplayStatics::ApplyDamage(HitPair.Key,
-					Damage * HitPair.Value,
+				UGameplayStatics::ApplyDamage(DamagePair.Key,
+					Damage * DamagePair.Value,
 					InstigatorController,
 					this,
 					UDamageType::StaticClass()
 					);
 			}
 		}
-		
-		HitCharacters.AddUnique(HitPair.Key);
 	}
-
+	
 	// 客户端上霰弹枪开火时应用服务器滞后补偿
 	if (!HasAuthority() && bUseServerSideRewind)
 	{

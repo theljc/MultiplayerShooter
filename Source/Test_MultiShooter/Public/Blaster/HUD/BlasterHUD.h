@@ -7,6 +7,7 @@
 #include "BlasterHUD.generated.h"
 
 
+class UElimAnnouncement;
 class UAnnouncement;
 class UCharacterOverlay;
 
@@ -45,6 +46,8 @@ public:
 
 	void AddAnnouncement();
 	
+	void AddElimAnnouncement(FString AttackerName, FString VictimName);
+	
 	virtual void DrawHUD() override;
 
 	
@@ -52,8 +55,23 @@ protected:
 	virtual void BeginPlay() override;
 	
 private:
+	UPROPERTY()
+	TObjectPtr<APlayerController> OwningPlayerController;
+	
 	FHUDPackage HUDPackage;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UElimAnnouncement> ElimAnnouncementClass;
+
+	UPROPERTY(EditAnywhere)
+	float ElimAnnouncementTime = 2.5f;
+
+	UFUNCTION()
+	void ElimAnnouncementTimerFinished(UElimAnnouncement* MsgToRemove);
+
+	UPROPERTY()
+	TArray<UElimAnnouncement*> ElimMessages;
+	
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
 

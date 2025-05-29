@@ -73,8 +73,10 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 		bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
 		if (HasAuthority() && bCauseAuthDamage)
 		{
+			const float DamageToCause = HitResult.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
+
 			UGameplayStatics::ApplyDamage(BlasterCharacter,
-				Damage,
+				DamageToCause,
 				InstigatorController,
 				this,
 				UDamageType::StaticClass());

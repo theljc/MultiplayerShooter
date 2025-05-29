@@ -41,6 +41,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 						SpawnedProjectile = World->SpawnActor<AProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParameters);
 						SpawnedProjectile->bUseServerSideRewind = false;
 						SpawnedProjectile->Damage = Damage;
+						SpawnedProjectile->HeadShotDamage = HeadShotDamage;
 					}
 					else // 服务器上的其他玩家
 					{

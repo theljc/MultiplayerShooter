@@ -46,6 +46,8 @@ public:
 	// 保存关卡开始的时间
 	float LevelStartingTime = 0.f;
 
+	bool bTeamsMatch = false;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnMatchStateSet() override;

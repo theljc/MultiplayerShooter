@@ -244,7 +244,7 @@ void ABlasterCharacter::MulticastGainedTheLead_Implementation()
 	{
 		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
 			CrownSystem,
-			GetCapsuleComponent(),
+			GetMesh(),
 			FName(),
 			GetActorLocation() + FVector(0.f, 0.f, 110.f),
 			GetActorRotation(),
@@ -266,15 +266,31 @@ void ABlasterCharacter::MulticastLostTheLead_Implementation()
 	}
 }
 
+void ABlasterCharacter::SetTeamColor(ETeam Team)
+{
+	if (GetMesh() == nullptr or !OriginalMaterial) return;
+
+	switch (Team)
+	{
+		case ETeam::ET_RedTeam:
+			GetMesh()->SetMaterial(0, RedMaterial);
+			DissolveMaterialInstance = RedDissolveMatInst;
+			break;
+		case ETeam::ET_BlueTeam:
+			GetMesh()->SetMaterial(0, BlueMaterial);
+			DissolveMaterialInstance = BlueDissolveMatInst;
+			break;
+		case ETeam::ET_NoTeam:
+			GetMesh()->SetMaterial(0, OriginalMaterial);
+			DissolveMaterialInstance = BlueDissolveMatInst;
+			break;
+	}
+}
+
 // Called when the game starts or when spawned
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	SpawnDefaultWeapon();
-	
-	UpdateHUDHealth();
-	UpdateHUDShield();
-	UpdateHUDAmmo();
 	
 	if (HasAuthority())
 	{
@@ -680,17 +696,24 @@ void ABlasterCharacter::ThrowGrenadeButtonPressed()
 	}
 }
 
-void ABlasterCharacter::HideCameraIfCharacterClosed()
+void ABlasterCharacter::HideCharacterIfCameraClosed()
 {
 	if (!IsLocallyControlled()) return;
 
 	if (( Camera->GetComponentLocation() - GetActorLocation() ).Size() < CameraThreshold)
 	{
+		// 隐藏角色、主武器和副武器
 		GetMesh()->SetVisibility(false);
 		if (CombatComponent and CombatComponent->EquipWeapon and CombatComponent->EquipWeapon->GetWeaponMesh())
 		{
 			CombatComponent->EquipWeapon->GetWeaponMesh()->bOwnerNoSee = true;
 		}
+
+		if (CombatComponent and CombatComponent->SecondaryEquipWeapon and CombatComponent->SecondaryEquipWeapon->GetWeaponMesh())
+		{
+			CombatComponent->SecondaryEquipWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+		
 	}
 	else
 	{
@@ -699,6 +722,12 @@ void ABlasterCharacter::HideCameraIfCharacterClosed()
 		{
 			CombatComponent->EquipWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
+
+		if (CombatComponent and CombatComponent->SecondaryEquipWeapon and CombatComponent->SecondaryEquipWeapon->GetWeaponMesh())
+		{
+			CombatComponent->SecondaryEquipWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+		
 	}
 	
 }
@@ -749,6 +778,7 @@ void ABlasterCharacter::PollInit()
 		{
 			BlasterPlayerState->AddToScore(0.f);
 			BlasterPlayerState->AddToDefeats(0);
+			SetTeamColor(BlasterPlayerState->GetTeam());
 			
 			ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
 
@@ -756,6 +786,18 @@ void ABlasterCharacter::PollInit()
 			{
 				MulticastGainedTheLead();
 			}
+		}
+	}
+	
+	if (BlasterPlayerController == nullptr)
+	{
+		BlasterPlayerController = BlasterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Controller)) : BlasterPlayerController;
+		if (BlasterPlayerController)
+		{
+			SpawnDefaultWeapon();
+			UpdateHUDAmmo();
+			UpdateHUDHealth();
+			UpdateHUDShield();
 		}
 	}
 	
@@ -881,7 +923,12 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
                                       class AController* InstigatorController, AActor* DamageCauser)
 {
 	if (bElimed) return;
+
+	BlasterGameMode = BlasterGameMode == nullptr ? TObjectPtr<ABlasterGameMode>(Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode())) : BlasterGameMode;
+	Damage = BlasterGameMode->CalculateDamage(InstigatorController, GetController(), Damage);
+	
 	float DamageToHealth = Damage;
+	
 	if (Shield > 0.f)
 	{
 		if (Shield >= Damage)
@@ -903,7 +950,6 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 
 	if (Health <= 0.f)
 	{
-		BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
 		if (BlasterGameMode)
 		{
 			BlasterPlayerController = BlasterPlayerController == nullptr ? TObjectPtr<ABlasterPlayerController>(Cast<ABlasterPlayerController>(Controller)) : BlasterPlayerController;
@@ -969,7 +1015,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 
 	RotateInPlace(DeltaTime);
 	
-	HideCameraIfCharacterClosed();
+	HideCharacterIfCameraClosed();
 
 	PollInit();
 	

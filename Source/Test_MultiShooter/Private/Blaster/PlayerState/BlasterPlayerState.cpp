@@ -77,3 +77,23 @@ void ABlasterPlayerState::AddToDefeats(float DefeatsAmount)
 	}
 	
 }
+
+void ABlasterPlayerState::OnRep_Team()
+{
+	BlasterCharacter = BlasterCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(GetPawn())) : BlasterCharacter;
+	if (BlasterCharacter)
+	{
+		BlasterCharacter->SetTeamColor(Team);
+	}
+}
+
+void ABlasterPlayerState::SetTeam(ETeam TeamToSet)
+{
+	Team = TeamToSet;
+	
+	BlasterCharacter = BlasterCharacter == nullptr ? TObjectPtr<ABlasterCharacter>(Cast<ABlasterCharacter>(GetPawn())) : BlasterCharacter;
+	if (BlasterCharacter)
+	{
+		BlasterCharacter->SetTeamColor(Team);
+	}
+}

@@ -7,6 +7,8 @@
 #include "GameFramework/PlayerController.h"
 #include "BlasterPlayerController.generated.h"
 
+class ABlasterGameState;
+class ABlasterPlayerState;
 class UReturnToMainMenu;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
 
@@ -34,12 +36,17 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ReceivedPlayer() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	void HideTeamScores();
+	void InitTeamScores();
+	void SetHUDRedTeamScore(int32 RedScore);
+	void SetHUDBlueTeamScore(int32 BlueScore);
 	
 	// 同步服务器的时间
 	float GetServerTime();
 
-	void OnMatchStateSet(FName State);
-	void HandleMatchStart();
+	void OnMatchStateSet(FName State, bool bTeamMatch = false);
+	void HandleMatchStart(bool bTeamsMatch = false);
 	void HandleCooldown();
 
 	void HighPingWarning();
@@ -89,6 +96,15 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
+
+	UPROPERTY(ReplicatedUsing = OnRep_ShowTeamScores)
+	bool bShowTeamScores = false;
+
+	UFUNCTION()
+	void OnRep_ShowTeamScores();
+
+	FString GetInfoText(const TArray<ABlasterPlayerState*>& Players);
+	FString GetTeamsInfoText(ABlasterGameState* BlasterGameState);
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")

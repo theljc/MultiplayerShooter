@@ -23,6 +23,9 @@ public:
 
 	void UpdateTopScore(ABlasterPlayerState* ScoringPlayer);
 
+	void RedTeamScores();
+	void BlueTeamScores();
+	
 	TArray<ABlasterPlayerState*> RedTeam;
 	TArray<ABlasterPlayerState*> BlueTeam;
 

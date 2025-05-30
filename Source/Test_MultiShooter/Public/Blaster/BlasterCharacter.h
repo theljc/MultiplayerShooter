@@ -10,6 +10,7 @@
 #include "Interface/InteractCrosshair_Interface.h"
 #include "BlasterCharacter.generated.h"
 
+enum class ETeam : uint8;
 class UNiagaraComponent;
 class UNiagaraSystem;
 class ULagCompensationComponent;
@@ -51,7 +52,7 @@ public:
 	void UpdateHUDShield();
 	void UpdateHUDAmmo();
 	void DropOrDestroyWeapon(AWeapon* Weapon);
-
+	
 	void Elim(bool bPlayerLeftGame);
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -80,6 +81,8 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastLostTheLead();
+
+	void SetTeamColor(ETeam Team);
 	
 protected:
 	// Called when the game starts or when spawned
@@ -103,7 +106,7 @@ protected:
 	void ReloadButtonPressed();
 	void ThrowGrenadeButtonPressed();
 
-	void HideCameraIfCharacterClosed();
+	void HideCharacterIfCameraClosed();
 
 	void SimProxiesTurn();
 
@@ -228,6 +231,26 @@ private:
 
 	UPROPERTY(EditAnywhere, Category=Combat)
 	TObjectPtr<UAnimMontage> SwapMontage;
+
+	/** 
+	* Team colors
+	*/
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	TObjectPtr<UMaterialInstance> RedDissolveMatInst;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	TObjectPtr<UMaterialInstance> RedMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	TObjectPtr<UMaterialInstance> BlueDissolveMatInst;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	TObjectPtr<UMaterialInstance> BlueMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	TObjectPtr<UMaterialInstance> OriginalMaterial;
+
 	
 	bool bRotateRootBone;
 	float TurnThreshold = 0.5f;

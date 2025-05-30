@@ -152,6 +152,11 @@ void ABlasterGameMode::PlayerLeftGame(ABlasterPlayerState* PlayerLeaving)
 	}
 }
 
+float ABlasterGameMode::CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage)
+{
+	return BaseDamage;
+}
+
 void ABlasterGameMode::BeginPlay()
 {
 	Super::BeginPlay();
@@ -168,7 +173,7 @@ void ABlasterGameMode::OnMatchStateSet()
 		ABlasterPlayerController* BlasterPlayerController = Cast<ABlasterPlayerController>(*It);
 		if (BlasterPlayerController)
 		{
-			BlasterPlayerController->OnMatchStateSet(MatchState);
+			BlasterPlayerController->OnMatchStateSet(MatchState, bTeamsMatch);
 		}
 	}
 	

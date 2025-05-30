@@ -30,6 +30,7 @@ public:
 	virtual void RequestRespawn(ACharacter* ElimmedPlayer, AController* ElimmedController);
 	// 玩家退出游戏
 	void PlayerLeftGame(ABlasterPlayerState* PlayerLeaving);
+	virtual float CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage);
 
 	// 游戏一开始的热身时间
 	UPROPERTY(EditDefaultsOnly)

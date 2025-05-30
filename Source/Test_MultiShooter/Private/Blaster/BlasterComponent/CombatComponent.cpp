@@ -3,7 +3,6 @@
 
 #include "Blaster/BlasterComponent/CombatComponent.h"
 
-#include "VREditorBaseActor.h"
 #include "Blaster/BlasterCharacter.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"

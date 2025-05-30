@@ -43,7 +43,6 @@ public class MultiplayerSessions : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"OnlineSubsystemNull",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

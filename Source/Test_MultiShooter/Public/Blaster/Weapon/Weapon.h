@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+enum class ETeam : uint8;
 class USoundCue;
 class ABlasterPlayerController;
 class ABlasterCharacter;
@@ -47,7 +48,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Owner() override;
 	virtual void Fire(const FVector& HitTarget);
-	void Dropped();
+	virtual void Dropped();
 	void SetHUDAmmo();
 	void AddAmmo(int32 AmmoAmount);
 
@@ -174,15 +175,19 @@ private:
 	UPROPERTY(EditAnywhere)
 	EWeaponTypes WeaponTypes;
 
+	UPROPERTY(EditAnywhere)
+	ETeam Team;
+	
 public:
 	void SetWeaponState(EWeaponState NewWeaponState);
 	void OnWeaponStateSet();
-	void EquipWeapon();
-	void DropWeapon();
+	virtual void EquipWeapon();
+	virtual void DropWeapon();
 	void EquipSecondaryWeapon();
 	
 	FORCEINLINE USphereComponent* GetSphereComponent() const { return SphereComponent; }
 	FORCEINLINE TObjectPtr<USkeletalMeshComponent> GetWeaponMesh() const { return WeaponMesh; }
+	FORCEINLINE UWidgetComponent* GetPickupWidget() const { return PickUpWidget; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomedInterpSpeed() const { return ZoomedInterpSpeed; }
 	FORCEINLINE EWeaponTypes GetWeaponType() const { return WeaponTypes; }

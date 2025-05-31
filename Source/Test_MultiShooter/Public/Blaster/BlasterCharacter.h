@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurnInPlace.h"
+#include "BlasterComponent/CombatComponent.h"
 #include "BlasterTypes/CombatState.h"
 #include "Components/TimelineComponent.h"
 #include "Interface/InteractCrosshair_Interface.h"
@@ -52,6 +53,9 @@ public:
 	void UpdateHUDShield();
 	void UpdateHUDAmmo();
 	void DropOrDestroyWeapon(AWeapon* Weapon);
+	void DropOrDestroyWeapons();
+	void SetSpawnPoint();
+	void OnPlayerStateInitialized();
 	
 	void Elim(bool bPlayerLeftGame);
 
@@ -105,7 +109,6 @@ protected:
 	void FireButtonReleased();
 	void ReloadButtonPressed();
 	void ThrowGrenadeButtonPressed();
-
 	void HideCharacterIfCameraClosed();
 
 	void SimProxiesTurn();
@@ -416,6 +419,8 @@ public:
 	FORCEINLINE UBuffComponent* GetBuffComponent() { return BuffComponent; }
 	FORCEINLINE ULagCompensationComponent* GetLagCompensationComponent() { return LagCompensationComponent; }
 
+	bool IsHoldingFlag();
+
 	bool IsLocallyReloading();
 	
 	ECombatState GetCombatState() const;
@@ -423,6 +428,8 @@ public:
 	TObjectPtr<AWeapon> GetWeapon();
 
 	FVector GetHitTarget();
+
+	ETeam GetTeam();
 	
 };
 

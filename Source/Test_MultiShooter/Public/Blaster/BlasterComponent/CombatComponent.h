@@ -29,6 +29,7 @@ public:
 	void DropEquippedWeapon();
 	void AttachActorToRightHand(AActor* ActorToAttach);
 	void AttachActorToLeftHand(AActor* ActorToAttach);
+	void AttachFlagToLeftHand(AActor* ActorToAttach);
 	void AttachActorToBackpack(AActor* ActorToAttach);
 	void UpdateCarriedAmmo();
 	void ReloadEmptyWeapon();
@@ -239,9 +240,17 @@ private:
 
 	void UpdateHUDGrenades();
 
+	UPROPERTY(ReplicatedUsing=OnRep_HoldingTheFlag)
+	bool bHoldingFlag = false;
+
+	UFUNCTION()
+	void OnRep_HoldingTheFlag();
+
+	UPROPERTY()
+	TObjectPtr<AWeapon> TheFlag;
+	
 public:
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	bool ShouldSwapWeapons();
 	
 };
-

@@ -35,6 +35,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME(UCombatComponent, Grenades);
+	DOREPLIFETIME(UCombatComponent, bHoldingFlag);
 	
 }
 
@@ -337,6 +338,14 @@ void UCombatComponent::UpdateHUDGrenades()
 	if (CharacterPlayerController)
 	{
 		CharacterPlayerController->SetHUDGrenades(Grenades);
+	}
+}
+
+void UCombatComponent::OnRep_HoldingTheFlag()
+{
+	if (bHoldingFlag and Character and Character->IsLocallyControlled())
+	{
+		Character->Crouch();
 	}
 }
 
@@ -757,6 +766,17 @@ void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach)
 	
 }
 
+void UCombatComponent::AttachFlagToLeftHand(AActor* ActorToAttach)
+{
+	if (Character == nullptr or Character->GetMesh() == nullptr or ActorToAttach == nullptr ) return;
+	
+	const USkeletalMeshSocket* WeaponSocket = Character->GetMesh()->GetSocketByName(FName("FlagSocket"));
+	if (WeaponSocket)
+	{
+		WeaponSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
 void UCombatComponent::AttachActorToBackpack(AActor* ActorToAttach)
 {
 	if (Character == nullptr or Character->GetMesh() == nullptr or ActorToAttach == nullptr ) return;
@@ -796,19 +816,31 @@ void UCombatComponent::EquippedWeapon(AWeapon* WeaponToEquipped)
 {
 	if (Character == nullptr || WeaponToEquipped == nullptr) return;
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
-	
-	// 已经有主武器的情况下，装备到副武器插槽
-	if (EquipWeapon != nullptr and SecondaryEquipWeapon == nullptr)
+
+	if (WeaponToEquipped->GetWeaponType() ==  EWeaponTypes::EWT_Flag)
 	{
-		EquipSecondaryButton(WeaponToEquipped);
+		bHoldingFlag = true;
+		Character->Crouch();
+		WeaponToEquipped->SetWeaponState(EWeaponState::EWC_Equipped);
+		AttachFlagToLeftHand(WeaponToEquipped);
+		WeaponToEquipped->SetOwner(Character);
+		TheFlag = WeaponToEquipped;
 	}
 	else
 	{
-		EquipPrimaryButton(WeaponToEquipped);
+		// 已经有主武器的情况下，装备到副武器插槽
+		if (EquipWeapon != nullptr and SecondaryEquipWeapon == nullptr)
+		{
+			EquipSecondaryButton(WeaponToEquipped);
+		}
+		else
+		{
+			EquipPrimaryButton(WeaponToEquipped);
+		}
+
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
 	}
-	
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
 	
 }
 

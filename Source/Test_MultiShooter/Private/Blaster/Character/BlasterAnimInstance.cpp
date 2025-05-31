@@ -48,7 +48,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	}
 	bUseAimOffset = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied and !BlasterCharacter->GetDisplayGameplay();
 	bTransformRightHand = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied and !BlasterCharacter->GetDisplayGameplay();
-
+	bHoldingFlag = BlasterCharacter->IsHoldingFlag();
+	
 	// 计算角色速度方向和控制器方向的差量，用于判断移动方向
 	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(BlasterCharacter->GetVelocity());

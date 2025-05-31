@@ -82,6 +82,9 @@ private:
 
 	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
 	bool bTransformRightHand;
+
+	UPROPERTY(BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = true))
+	bool bHoldingFlag;
 	
 	FRotator LastFrameCharacterRotator;
 	FRotator CharacterRotator;

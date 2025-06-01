@@ -3,6 +3,7 @@
 
 #include "Blaster/Weapon/Flag.h"
 
+#include "Blaster/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 
@@ -25,6 +26,39 @@ void AFlag::Dropped()
 	SetOwner(nullptr);
 	BlasterOwnerCharacter = nullptr;
 	BlasterOwnerPlayerController = nullptr;
+}
+
+void AFlag::ResetFlag()
+{
+	ABlasterCharacter* FlagBearer = Cast<ABlasterCharacter>(GetOwner());
+	if (FlagBearer)
+	{
+		FlagBearer->SetHoldingTheFlag(false);
+		FlagBearer->SetOverlappingWeapon(nullptr);
+		FlagBearer->UnCrouch();
+	}
+
+	if (!HasAuthority()) return;
+
+	FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld, true);
+	FlagMesh->DetachFromComponent(DetachmentTransformRules);
+	SetWeaponState(EWeaponState::EWC_Initial);
+	GetSphereComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetSphereComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+
+	
+	SetOwner(nullptr);
+	BlasterOwnerCharacter = nullptr;
+	BlasterOwnerPlayerController = nullptr;
+
+	SetActorTransform(InitialTransform);
+
+}
+
+void AFlag::BeginPlay()
+{
+	Super::BeginPlay();
+	InitialTransform = GetActorTransform();
 }
 
 void AFlag::EquipWeapon()
@@ -56,5 +90,5 @@ void AFlag::DropWeapon()
 	FlagMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
 	FlagMesh->MarkRenderStateDirty();
 	EnableCustomDepth(true);
-	
+
 }

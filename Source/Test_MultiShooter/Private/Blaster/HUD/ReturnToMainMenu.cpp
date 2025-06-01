@@ -56,7 +56,7 @@ void UReturnToMainMenu::MenuTearDown()
 
 		if (PlayerController)
 		{
-			FInputModeGameAndUI InputModeData;
+			FInputModeGameOnly InputModeData;
 			PlayerController->SetInputMode(InputModeData);
 			PlayerController->SetShowMouseCursor(false);
 		}

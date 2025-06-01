@@ -430,6 +430,8 @@ public:
 	FVector GetHitTarget();
 
 	ETeam GetTeam();
-	
+
+	void SetHoldingTheFlag(bool bHolding);
+
 };
 

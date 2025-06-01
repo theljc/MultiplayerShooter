@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Blaster/GameMode/LobbyGameMode.h"
+
+#include "MultiplayerSessionsSubsystem.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 #include "UObject/ConstructorHelpers.h"
@@ -19,17 +21,49 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 	
-	if (GameState)
-	{
-		int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
+	// if (GameState)
+	// {
+	// 	int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
+	//
+	// 	APlayerState* PlayerState = NewPlayer->GetPlayerState<APlayerState>();
+	// 	if (PlayerState)
+	// 	{
+	// 		FString PlayerName = PlayerState->GetPlayerName();
+	// 	}
+	// }
 
-		APlayerState* PlayerState = NewPlayer->GetPlayerState<APlayerState>();
-		if (PlayerState)
+	int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
+
+	UGameInstance* GameInstance = GetGameInstance();
+	if (GameInstance)
+	{
+		UMultiplayerSessionsSubsystem* Subsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
+		check(Subsystem);
+
+		if (NumberOfPlayers == Subsystem->DesiredNumPublicConnections)
 		{
-			FString PlayerName = PlayerState->GetPlayerName();
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("Join Player %s"), *PlayerName));
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				bUseSeamlessTravel = true;
+
+				FString MatchType = Subsystem->DesiredMatchType;
+				if (MatchType == "FreeForAll")
+				{
+					World->ServerTravel(FString("/Game/Maps/BlasterMap?listen"));
+				}
+				else if (MatchType == "Teams")
+				{
+					World->ServerTravel(FString("/Game/Maps/Teams?listen"));
+				}
+				else if (MatchType == "CaptureTheFlag")
+				{
+					World->ServerTravel(FString("/Game/Maps/CaptureTheFlag?listen"));
+				}
+			}
 		}
 	}
+	
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)
@@ -44,7 +78,6 @@ void ALobbyGameMode::Logout(AController* Exiting)
 		if (PlayerState)
 		{
 			FString PlayerName = PlayerState->GetPlayerName();
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("Exit Player %s"), *PlayerName));
 		}
 	}
 }

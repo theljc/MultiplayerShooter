@@ -21,7 +21,7 @@ void ULagCompensationComponent::BeginPlay()
 
 	FFramePackage FramePackage;
 	SaveFramePackage(FramePackage);
-	ShowFramePackage(FramePackage, FColor::Red);
+	// ShowFramePackage(FramePackage, FColor::Red);
 }
 
 void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
